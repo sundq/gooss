@@ -8,10 +8,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
-	// "fmt"
+	"fmt"
 	"github.com/bitly/go-simplejson"
-	"github.com/parnurzeal/gorequest"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/http/httputil"
 	"os"
 	"sort"
 	"strings"
@@ -29,6 +31,16 @@ type oss_agent struct {
 	ContentType          string
 	Date                 string
 	Url                  string
+	Debug                bool
+	logger               *log.Logger
+}
+
+type AliOSSClient struct {
+	AccessKey       string
+	AccessKeySecret string
+	EndPoint        string
+	Debug           bool
+	logger          *log.Logger
 }
 
 type Bucket struct {
@@ -42,8 +54,20 @@ type BucketList struct {
 	Buckets []Bucket `xml:"Buckets>Bucket"`
 }
 
-type Request *gorequest.Request
-type Response *gorequest.Response
+type AliOssError struct {
+	Code           string `xml:"Code"`
+	Message        string `xml:"Message"`
+	RequestId      string `xml:"RequestId"`
+	HostId         string `xml:"HostId"`
+	OSSAccessKeyId string `xml:"OSSAccessKeyId"`
+}
+
+func (e AliOssError) Error() string {
+	return fmt.Sprintf("%v: %v RequestId:%s", e.Code, e.Message, e.RequestId)
+}
+
+// type Request *gorequest.Request
+// type Response *gorequest.Response
 
 func (s *oss_agent) calc_signature() string {
 	//sort the canonicalized headers
@@ -74,29 +98,50 @@ func (s *oss_agent) calc_signature() string {
 	return b4str
 }
 
-func (s *oss_agent) send_request() (gorequest.Response, string, []error) {
+func (s *oss_agent) send_request() (*http.Response, error) {
+	client := &http.Client{}
 	sig := s.calc_signature()
-	request := gorequest.New()
-	request.Get(s.Url)
-	request.Set("Date", s.Date)
+	// request := gorequest.New()
+	// request.Get(s.Url)
+	// request.Set("Date", s.Date)
+	// for k, v := range s.CanonicalizedHeaders {
+	// 	request.Set(k, v)
+	// }
+
+	// for k, v := range s.CanonicalizedQuery {
+	// 	request.Param(k, v)
+	// }
+
+	// request.Set("Authorization", "OSS "+s.AccessKey+":"+sig)
+	// return request.End()
+
+	req, err := http.NewRequest(s.Verb, s.Url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Date", s.Date)
+	req.Header.Add("Authorization", "OSS "+s.AccessKey+":"+sig)
 	for k, v := range s.CanonicalizedHeaders {
-		request.Set(k, v)
+		req.Header.Add(k, v)
 	}
 
+	q := req.URL.Query()
 	for k, v := range s.CanonicalizedQuery {
-		request.Param(k, v)
+		q.Add(k, v)
 	}
+	req.URL.RawQuery = q.Encode()
 
-	request.Set("Authorization", "OSS "+s.AccessKey+":"+sig)
-	return request.End()
-}
+	if s.Debug {
+		dump, err := httputil.DumpRequest(req, true)
+		if nil != err {
+			s.logger.Println("Error:", err)
+		} else {
+			s.logger.Printf("HTTP Request: %s", string(dump))
+		}
+	}
+	return client.Do(req)
 
-type AliOSSClient struct {
-	AccessKey       string
-	AccessKeySecret string
-	EndPoint        string
-	Debug           bool
-	logger          *log.Logger
 }
 
 const (
@@ -128,7 +173,7 @@ func New(access_key string, access_key_secret string, endpoint interface{}, debu
 	return s
 }
 
-func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (gorequest.Response, *simplejson.Json, []error) {
+func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (*simplejson.Json, error) {
 	t := time.Now().UTC()
 	date := t.Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	uri := "/"
@@ -143,7 +188,7 @@ func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (go
 	}
 
 	if max_size > 0 {
-		query["max-keys"] = string(max_size)
+		query["max-keys"] = fmt.Sprintf("%d", max_size)
 	}
 
 	s := &oss_agent{
@@ -157,16 +202,35 @@ func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (go
 		CanonicalizedQuery:   query,
 		Content:              []byte(""),
 		ContentType:          "",
+		Debug:                c.Debug,
+		logger:               c.logger,
 	}
 
 	v := &BucketList{}
-	resp, xml_result, errs := s.send_request()
-	if errs != nil {
-		return resp, &simplejson.Json{}, errs
+	e := &AliOssError{}
+	resp, err := s.send_request()
+	defer resp.Body.Close()
+	if err != nil {
+		return &simplejson.Json{}, err
 	}
-	// fmt.Println(xml_result)
-	xml.Unmarshal([]byte(xml_result), v)
-	result, _ := json.Marshal(v)
-	js, _ := simplejson.NewJson(result)
-	return resp, js, errs
+	if s.Debug {
+		dump, err := httputil.DumpResponse(resp, true)
+		if nil != err {
+			s.logger.Println("Error:", err)
+		} else {
+			s.logger.Printf("HTTP Response: %s", string(dump))
+		}
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	xml_result := string(body)
+	if resp.StatusCode == 200 {
+		xml.Unmarshal([]byte(xml_result), v)
+		result, _ := json.Marshal(v)
+		js, _ := simplejson.NewJson(result)
+		return js, nil
+	} else {
+		xml.Unmarshal([]byte(xml_result), e)
+		return &simplejson.Json{}, e
+	}
 }

@@ -1,16 +1,18 @@
 package aliyunoss
 
 import (
-	"fmt"
+	// "fmt"
 	"testing"
 )
 
 func TestListBucket(t *testing.T) {
-	c := New("C59MdXDbgVItTf2O", "z3EAIwHJ4FHGBpDW84j7iW2eSWilZQ", nil, nil)
-	cc, result, err := c.ListBucket("xiao", "", 0)
-	l := result.Get("Buckets").GetIndex(0).MustMap()
-	fmt.Println(l["Name"])
-	cc = cc
-	err = err
-	t.Log(result)
+	result, err := c.ListBucket("", "", 1)
+	// l := result.Get("Buckets").GetIndex(0).MustMap()
+	// fmt.Println(l["Name"])
+	// err = err
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(result)
+	}
 }
