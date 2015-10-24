@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
+	// "fmt"
 	"github.com/bitly/go-simplejson"
 	"github.com/parnurzeal/gorequest"
 	"log"
@@ -18,15 +19,16 @@ import (
 )
 
 type oss_agent struct {
-	AccessKey             string
-	AccessKeySecret       string
-	Verb                  string
-	CanonicalizedHeaders  map[string]string
-	CanonicalizedResource string
-	Content               []byte
-	ContentType           string
-	Date                  string
-	Url                   string
+	AccessKey            string
+	AccessKeySecret      string
+	Verb                 string
+	CanonicalizedHeaders map[string]string
+	CanonicalizedUri     string
+	CanonicalizedQuery   map[string]string
+	Content              []byte
+	ContentType          string
+	Date                 string
+	Url                  string
 }
 
 type Bucket struct {
@@ -45,14 +47,14 @@ type Response *gorequest.Response
 
 func (s *oss_agent) calc_signature() string {
 	//sort the canonicalized headers
-	var keys []string
-	for k := range s.CanonicalizedHeaders {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
 	sorted_canonicalized_headers_str := ""
-	for _, k := range keys {
-		sorted_canonicalized_headers_str += (strings.Trim(k, " ") + ":" + strings.Trim(s.CanonicalizedHeaders[k], "") + "\n")
+	var header_keys []string
+	for k := range s.CanonicalizedHeaders {
+		header_keys = append(header_keys, k)
+	}
+	sort.Strings(header_keys)
+	for _, k := range header_keys {
+		sorted_canonicalized_headers_str += (strings.Trim(k, " ") + ":" + strings.Trim(s.CanonicalizedHeaders[k], " ") + "\n")
 	}
 
 	date := s.Date
@@ -61,7 +63,10 @@ func (s *oss_agent) calc_signature() string {
 		sum := md5.Sum(s.Content)
 		content_md5 = hex.EncodeToString(sum[:])
 	}
-	signature_str := s.Verb + "\n" + content_md5 + "\n" + s.ContentType + "\n" + date + "\n" + sorted_canonicalized_headers_str + s.CanonicalizedResource
+	canonicalized_resource_str := s.CanonicalizedUri
+
+	signature_ele := []string{s.Verb, content_md5, s.ContentType, date, sorted_canonicalized_headers_str + canonicalized_resource_str}
+	signature_str := strings.Join(signature_ele, "\n")
 	mac := hmac.New(sha1.New, []byte(s.AccessKeySecret))
 	mac.Write([]byte(signature_str))
 	result := mac.Sum(nil)
@@ -70,6 +75,7 @@ func (s *oss_agent) calc_signature() string {
 }
 
 func (s *oss_agent) send_request() (gorequest.Response, string, []error) {
+	sig := s.calc_signature()
 	request := gorequest.New()
 	request.Get(s.Url)
 	request.Set("Date", s.Date)
@@ -77,7 +83,11 @@ func (s *oss_agent) send_request() (gorequest.Response, string, []error) {
 		request.Set(k, v)
 	}
 
-	request.Set("Authorization", "OSS "+s.AccessKey+":"+s.calc_signature())
+	for k, v := range s.CanonicalizedQuery {
+		request.Param(k, v)
+	}
+
+	request.Set("Authorization", "OSS "+s.AccessKey+":"+sig)
 	return request.End()
 }
 
@@ -103,7 +113,7 @@ func New(access_key string, access_key_secret string, endpoint interface{}, debu
 	}
 
 	if debug != nil {
-		if v, ok := endpoint.(bool); ok {
+		if v, ok := debug.(bool); ok {
 			debug_mode = v
 		}
 	}
@@ -118,19 +128,35 @@ func New(access_key string, access_key_secret string, endpoint interface{}, debu
 	return s
 }
 
-func (c *AliOSSClient) ListBucket() (gorequest.Response, *simplejson.Json, []error) {
+func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (gorequest.Response, *simplejson.Json, []error) {
 	t := time.Now().UTC()
 	date := t.Format("Mon, 02 Jan 2006 15:04:05 GMT")
+	uri := "/"
+	query := make(map[string]string)
+
+	if prefix != "" {
+		query["prefix"] = prefix
+	}
+
+	if maker != "" {
+		query["maker"] = maker
+	}
+
+	if max_size > 0 {
+		query["max-keys"] = string(max_size)
+	}
+
 	s := &oss_agent{
-		AccessKey:             c.AccessKey,
-		AccessKeySecret:       c.AccessKeySecret,
-		Verb:                  "GET",
-		Url:                   "http://" + c.EndPoint,
-		Date:                  date,
-		CanonicalizedHeaders:  make(map[string]string),
-		CanonicalizedResource: "/",
-		Content:               []byte(""),
-		ContentType:           "",
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  "http://" + c.EndPoint,
+		Date:                 date,
+		CanonicalizedHeaders: make(map[string]string),
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              []byte(""),
+		ContentType:          "",
 	}
 
 	v := &BucketList{}
@@ -138,6 +164,7 @@ func (c *AliOSSClient) ListBucket() (gorequest.Response, *simplejson.Json, []err
 	if errs != nil {
 		return resp, &simplejson.Json{}, errs
 	}
+	// fmt.Println(xml_result)
 	xml.Unmarshal([]byte(xml_result), v)
 	result, _ := json.Marshal(v)
 	js, _ := simplejson.NewJson(result)
