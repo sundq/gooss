@@ -101,20 +101,6 @@ func (s *oss_agent) calc_signature() string {
 func (s *oss_agent) send_request() (*http.Response, error) {
 	client := &http.Client{}
 	sig := s.calc_signature()
-	// request := gorequest.New()
-	// request.Get(s.Url)
-	// request.Set("Date", s.Date)
-	// for k, v := range s.CanonicalizedHeaders {
-	// 	request.Set(k, v)
-	// }
-
-	// for k, v := range s.CanonicalizedQuery {
-	// 	request.Param(k, v)
-	// }
-
-	// request.Set("Authorization", "OSS "+s.AccessKey+":"+sig)
-	// return request.End()
-
 	req, err := http.NewRequest(s.Verb, s.Url, nil)
 	if err != nil {
 		return nil, err
