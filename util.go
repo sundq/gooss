@@ -1,12 +1,14 @@
 package aliyunoss
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -30,6 +32,7 @@ type oss_agent struct {
 	CanonicalizedQuery   map[string]string
 	Content              []byte
 	ContentType          string
+	ContentMd5           string
 	Url                  string
 	Debug                bool
 	logger               *log.Logger
@@ -71,11 +74,15 @@ func (s *oss_agent) calc_signature(date string) string {
 	if len(s.Content) > 0 {
 		sum := md5.Sum(s.Content)
 		content_md5 = hex.EncodeToString(sum[:])
+		s.ContentMd5 = content_md5
 	}
 	canonicalized_resource_str := s.CanonicalizedUri
 
 	signature_ele := []string{s.Verb, content_md5, s.ContentType, date, sorted_canonicalized_headers_str + canonicalized_resource_str}
 	signature_str := strings.Join(signature_ele, "\n")
+	if s.Debug {
+		s.logger.Println("signature string:", signature_str)
+	}
 	mac := hmac.New(sha1.New, []byte(s.AccessKeySecret))
 	mac.Write([]byte(signature_str))
 	result := mac.Sum(nil)
@@ -88,13 +95,22 @@ func (s *oss_agent) send_request(is_stream bool) (*http.Response, []byte, error)
 	date := t.Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	client := &http.Client{}
 	sig := s.calc_signature(date)
-	req, err := http.NewRequest(s.Verb, s.Url, nil)
+
+	var data_reader io.Reader
+	if len(s.Content) > 0 {
+		data_reader = bytes.NewReader(s.Content)
+	} else {
+		data_reader = nil
+	}
+	req, err := http.NewRequest(s.Verb, s.Url, data_reader)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	req.Header.Add("Date", date)
 	req.Header.Add("Authorization", "OSS "+s.AccessKey+":"+sig)
+	req.Header.Add("Content-Md5", s.ContentMd5)
+	req.Header.Add("Content-Type", s.ContentType)
 	for k, v := range s.CanonicalizedHeaders {
 		req.Header.Add(k, v)
 	}

@@ -16,11 +16,12 @@ type BucketList struct {
 	Buckets []Bucket `xml:"Buckets>Bucket"`
 }
 
-type BucketLocation struct {
-	LocationConstraint string `xml:"LocationConstraint"`
+type BucketConfiguration struct {
+	XMLName            xml.Name `xml:"CreateBucketConfiguration"`
+	LocationConstraint string   `xml:LocationConstraint`
 }
 
-func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (*BucketList, error) {
+func (c *AliOSSClient) ListBucket(prefix string, marker string, max_size int) (*BucketList, error) {
 	uri := "/"
 	query := make(map[string]string)
 
@@ -28,8 +29,8 @@ func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (*B
 		query["prefix"] = prefix
 	}
 
-	if maker != "" {
-		query["maker"] = maker
+	if marker != "" {
+		query["maker"] = marker
 	}
 
 	if max_size > 0 {
@@ -62,6 +63,40 @@ func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (*B
 	} else {
 		xml.Unmarshal(xml_result, e)
 		return nil, e
+	}
+}
+
+func (c *AliOSSClient) CreateBucket(name string, location string) error {
+	bucket_config := &BucketConfiguration{LocationConstraint: location}
+	xml_content, _ := xml.MarshalIndent(bucket_config, "", "  ")
+	uri := fmt.Sprintf("/%s/", name)
+	query := make(map[string]string)
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "PUT",
+		Url:                  fmt.Sprintf("http://%s.%s", name, c.EndPoint),
+		CanonicalizedHeaders: make(map[string]string),
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              []byte(xml.Header + string(xml_content)),
+		ContentType:          "application/xml",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &BucketList{}
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode == 200 {
+		xml.Unmarshal(xml_result, v)
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
 	}
 }
 

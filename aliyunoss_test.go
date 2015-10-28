@@ -24,17 +24,26 @@ func TestListBucket(t *testing.T) {
 	}
 }
 
-func TestListObject(t *testing.T) {
+func TestCreateBucketOfLocation(t *testing.T) {
 	accesskey, access_key_secret := getAk()
 	c := New(accesskey, access_key_secret, nil, false)
-	result, err := c.ListObject("xiagnjun129866")
-	// for index, object := range result.Objects {
-	// 	fmt.Println(fmt.Sprintf("%d:%s %s %s", index, object.Key, object.Size, object.Type))
-	// }
+	err := c.CreateBucket("test111111", "oss-cn-hangzhou")
 	if err != nil {
 		t.Error(err)
 	} else {
-		t.Log(result.Objects)
+		t.Log()
+	}
+}
+
+func TestListObject(t *testing.T) {
+
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	result, err := c.ListObject("jiagouyun-cn", "", "", 0, "jakin-jiagouyun-sever/")
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(result)
 	}
 }
 
