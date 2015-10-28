@@ -1,6 +1,7 @@
 package aliyunoss
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -20,5 +21,19 @@ func TestListBucket(t *testing.T) {
 		t.Error(err)
 	} else {
 		t.Log(result)
+	}
+}
+
+func TestListObject(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	result, err := c.ListObject("xiagnjun129866")
+	// for index, object := range result.Objects {
+	// 	fmt.Println(fmt.Sprintf("%d:%s %s %s", index, object.Key, object.Size, object.Type))
+	// }
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(result.Objects)
 	}
 }
