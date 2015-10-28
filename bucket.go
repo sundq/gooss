@@ -1,6 +1,7 @@
 package aliyunoss
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 )
@@ -45,7 +46,7 @@ func (c *AliOSSClient) ListBucket(prefix string, marker string, max_size int) (*
 		CanonicalizedHeaders: make(map[string]string),
 		CanonicalizedUri:     uri,
 		CanonicalizedQuery:   query,
-		Content:              []byte(""),
+		Content:              nil,
 		ContentType:          "",
 		Debug:                c.Debug,
 		logger:               c.logger,
@@ -66,11 +67,19 @@ func (c *AliOSSClient) ListBucket(prefix string, marker string, max_size int) (*
 	}
 }
 
-func (c *AliOSSClient) CreateBucket(name string, location string) error {
+func (c *AliOSSClient) CreateBucket(name string, location string, permission string) error {
 	bucket_config := &BucketConfiguration{LocationConstraint: location}
 	xml_content, _ := xml.MarshalIndent(bucket_config, "", "  ")
 	uri := fmt.Sprintf("/%s/", name)
 	query := make(map[string]string)
+	header := make(map[string]string)
+
+	if permission == "" {
+		header["x-oss-acl"] = "private"
+	} else {
+		header["x-oss-acl"] = permission
+	}
+
 	s := &oss_agent{
 		AccessKey:            c.AccessKey,
 		AccessKeySecret:      c.AccessKeySecret,
@@ -79,7 +88,7 @@ func (c *AliOSSClient) CreateBucket(name string, location string) error {
 		CanonicalizedHeaders: make(map[string]string),
 		CanonicalizedUri:     uri,
 		CanonicalizedQuery:   query,
-		Content:              []byte(xml.Header + string(xml_content)),
+		Content:              bytes.NewReader([]byte(xml.Header + string(xml_content))),
 		ContentType:          "application/xml",
 		Debug:                c.Debug,
 		logger:               c.logger,
@@ -112,7 +121,7 @@ func (c *AliOSSClient) GetLocationOfBucket(bucket string) (string, error) {
 		CanonicalizedHeaders: make(map[string]string),
 		CanonicalizedUri:     uri,
 		CanonicalizedQuery:   query,
-		Content:              []byte(""),
+		Content:              nil,
 		ContentType:          "",
 		Debug:                c.Debug,
 		logger:               c.logger,

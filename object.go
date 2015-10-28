@@ -51,7 +51,7 @@ func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string
 		CanonicalizedHeaders: make(map[string]string),
 		CanonicalizedUri:     uri,
 		CanonicalizedQuery:   query,
-		Content:              []byte(""),
+		Content:              nil,
 		ContentType:          "",
 		Debug:                c.Debug,
 		logger:               c.logger,

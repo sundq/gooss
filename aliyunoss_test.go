@@ -27,7 +27,7 @@ func TestListBucket(t *testing.T) {
 func TestCreateBucketOfLocation(t *testing.T) {
 	accesskey, access_key_secret := getAk()
 	c := New(accesskey, access_key_secret, nil, false)
-	err := c.CreateBucket("test111111", "oss-cn-hangzhou")
+	err := c.CreateBucket("fff", "oss-cn-hangzhou", "")
 	if err != nil {
 		t.Error(err)
 	} else {

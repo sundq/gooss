@@ -1,7 +1,6 @@
 package aliyunoss
 
 import (
-	"bytes"
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/sha1"
@@ -30,7 +29,7 @@ type oss_agent struct {
 	CanonicalizedHeaders map[string]string
 	CanonicalizedUri     string
 	CanonicalizedQuery   map[string]string
-	Content              []byte
+	Content              io.Reader
 	ContentType          string
 	ContentMd5           string
 	Url                  string
@@ -71,11 +70,14 @@ func (s *oss_agent) calc_signature(date string) string {
 	}
 
 	content_md5 := ""
-	if len(s.Content) > 0 {
-		sum := md5.Sum(s.Content)
+	if s.Content != nil {
+		md5h := md5.New()
+		io.Copy(md5h, s.Content)
+		sum := md5h.Sum(nil)
 		content_md5 = hex.EncodeToString(sum[:])
 		s.ContentMd5 = content_md5
 	}
+
 	canonicalized_resource_str := s.CanonicalizedUri
 
 	signature_ele := []string{s.Verb, content_md5, s.ContentType, date, sorted_canonicalized_headers_str + canonicalized_resource_str}
@@ -96,13 +98,7 @@ func (s *oss_agent) send_request(is_stream bool) (*http.Response, []byte, error)
 	client := &http.Client{}
 	sig := s.calc_signature(date)
 
-	var data_reader io.Reader
-	if len(s.Content) > 0 {
-		data_reader = bytes.NewReader(s.Content)
-	} else {
-		data_reader = nil
-	}
-	req, err := http.NewRequest(s.Verb, s.Url, data_reader)
+	req, err := http.NewRequest(s.Verb, s.Url, s.Content)
 	if err != nil {
 		return nil, nil, err
 	}
