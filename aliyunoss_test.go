@@ -37,3 +37,14 @@ func TestListObject(t *testing.T) {
 		t.Log(result.Objects)
 	}
 }
+
+func TestListBucketOfLocation(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	result, err := c.GetLocationOfBucket("xiagnjun129866")
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(result)
+	}
+}

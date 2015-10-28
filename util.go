@@ -14,6 +14,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 )
 
 const (
@@ -29,7 +30,6 @@ type oss_agent struct {
 	CanonicalizedQuery   map[string]string
 	Content              []byte
 	ContentType          string
-	Date                 string
 	Url                  string
 	Debug                bool
 	logger               *log.Logger
@@ -55,7 +55,7 @@ func (e AliOssError) Error() string {
 	return fmt.Sprintf("%v: %v RequestId:%s", e.Code, e.Message, e.RequestId)
 }
 
-func (s *oss_agent) calc_signature() string {
+func (s *oss_agent) calc_signature(date string) string {
 	//sort the canonicalized headers
 	sorted_canonicalized_headers_str := ""
 	var header_keys []string
@@ -67,7 +67,6 @@ func (s *oss_agent) calc_signature() string {
 		sorted_canonicalized_headers_str += (strings.Trim(k, " ") + ":" + strings.Trim(s.CanonicalizedHeaders[k], " ") + "\n")
 	}
 
-	date := s.Date
 	content_md5 := ""
 	if len(s.Content) > 0 {
 		sum := md5.Sum(s.Content)
@@ -84,15 +83,17 @@ func (s *oss_agent) calc_signature() string {
 	return b4str
 }
 
-func (s *oss_agent) send_request(is_stream bool) (*http.Response, string, error) {
+func (s *oss_agent) send_request(is_stream bool) (*http.Response, []byte, error) {
+	t := time.Now().UTC()
+	date := t.Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	client := &http.Client{}
-	sig := s.calc_signature()
+	sig := s.calc_signature(date)
 	req, err := http.NewRequest(s.Verb, s.Url, nil)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
-	req.Header.Add("Date", s.Date)
+	req.Header.Add("Date", date)
 	req.Header.Add("Authorization", "OSS "+s.AccessKey+":"+sig)
 	for k, v := range s.CanonicalizedHeaders {
 		req.Header.Add(k, v)
@@ -124,13 +125,13 @@ func (s *oss_agent) send_request(is_stream bool) (*http.Response, string, error)
 	}
 
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
-	if is_stream {
+	if !is_stream {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return resp, string(body), nil
+		return resp, body, nil
 	} else {
-		return resp, "", nil
+		return resp, nil, nil
 	}
 }
 

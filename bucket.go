@@ -3,7 +3,6 @@ package aliyunoss
 import (
 	"encoding/xml"
 	"fmt"
-	"time"
 )
 
 type Bucket struct {
@@ -17,9 +16,11 @@ type BucketList struct {
 	Buckets []Bucket `xml:"Buckets>Bucket"`
 }
 
+type BucketLocation struct {
+	LocationConstraint string `xml:"LocationConstraint"`
+}
+
 func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (*BucketList, error) {
-	t := time.Now().UTC()
-	date := t.Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	uri := "/"
 	query := make(map[string]string)
 
@@ -40,7 +41,6 @@ func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (*B
 		AccessKeySecret:      c.AccessKeySecret,
 		Verb:                 "GET",
 		Url:                  "http://" + c.EndPoint,
-		Date:                 date,
 		CanonicalizedHeaders: make(map[string]string),
 		CanonicalizedUri:     uri,
 		CanonicalizedQuery:   query,
@@ -52,15 +52,48 @@ func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (*B
 
 	v := &BucketList{}
 	e := &AliOssError{}
-	resp, xml_result, err := s.send_request(true)
+	resp, xml_result, err := s.send_request(false)
 	if err != nil {
 		return nil, err
 	}
 	if resp.StatusCode == 200 {
-		xml.Unmarshal([]byte(xml_result), v)
+		xml.Unmarshal(xml_result, v)
 		return v, nil
 	} else {
-		xml.Unmarshal([]byte(xml_result), e)
+		xml.Unmarshal(xml_result, e)
 		return nil, e
+	}
+}
+
+func (c *AliOSSClient) GetLocationOfBucket(bucket string) (string, error) {
+	uri := fmt.Sprintf("/%s/?location", bucket)
+	query := make(map[string]string)
+	query["location"] = ""
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s", bucket, c.EndPoint),
+		CanonicalizedHeaders: make(map[string]string),
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              []byte(""),
+		ContentType:          "",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := ""
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode == 200 {
+		xml.Unmarshal(xml_result, &v)
+		return v, nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return "", e
 	}
 }
