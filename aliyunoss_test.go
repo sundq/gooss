@@ -1,7 +1,7 @@
 package aliyunoss
 
 import (
-	"fmt"
+	// "fmt"
 	"io/ioutil"
 	"strings"
 	"testing"

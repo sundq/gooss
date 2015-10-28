@@ -3,7 +3,6 @@ package aliyunoss
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"time"
 )
 
@@ -14,19 +13,6 @@ type Object struct {
 	Type         string `xml:"Type"`
 	Size         string `xml:"Size"`
 }
-
-// <Contents>
-//     <Key>fun/movie/001.avi</Key>
-//     <LastModified>2012-02-24T08:43:07.000Z</LastModified>
-//     <ETag>&quot;5B3C1A2E053D763E1B002CC607C5A0FE&quot;</ETag>
-//     <Type>Normal</Type>
-//     <Size>344606</Size>
-//     <StorageClass>Standard</StorageClass>
-//     <Owner>
-//         <ID>00220120222</ID>
-//         <DisplayName>user-example</DisplayName>
-//     </Owner>
-// </Contents>
 
 type ObjectList struct {
 	// XMLName xml.Name `xml:"ListAllMyBucketsResult"`
@@ -56,14 +42,10 @@ func (c *AliOSSClient) ListObject(bucket string) (*ObjectList, error) {
 
 	v := &ObjectList{}
 	e := &AliOssError{}
-	resp, err := s.send_request()
-	defer resp.Body.Close()
+	resp, xml_result, err := s.send_request(true)
 	if err != nil {
-		return &ObjectList{}, err
+		return nil, err
 	}
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	xml_result := string(body)
 	if resp.StatusCode == 200 {
 		xml.Unmarshal([]byte(xml_result), v)
 		return v, nil

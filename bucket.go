@@ -3,7 +3,6 @@ package aliyunoss
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"time"
 )
 
@@ -53,19 +52,15 @@ func (c *AliOSSClient) ListBucket(prefix string, maker string, max_size int) (*B
 
 	v := &BucketList{}
 	e := &AliOssError{}
-	resp, err := s.send_request()
-	defer resp.Body.Close()
+	resp, xml_result, err := s.send_request(true)
 	if err != nil {
-		return &BucketList{}, err
+		return nil, err
 	}
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	xml_result := string(body)
 	if resp.StatusCode == 200 {
 		xml.Unmarshal([]byte(xml_result), v)
 		return v, nil
 	} else {
 		xml.Unmarshal([]byte(xml_result), e)
-		return &BucketList{}, e
+		return nil, e
 	}
 }

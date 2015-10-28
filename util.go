@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -83,12 +84,12 @@ func (s *oss_agent) calc_signature() string {
 	return b4str
 }
 
-func (s *oss_agent) send_request() (*http.Response, error) {
+func (s *oss_agent) send_request(is_stream bool) (*http.Response, string, error) {
 	client := &http.Client{}
 	sig := s.calc_signature()
 	req, err := http.NewRequest(s.Verb, s.Url, nil)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	req.Header.Add("Date", s.Date)
@@ -112,6 +113,7 @@ func (s *oss_agent) send_request() (*http.Response, error) {
 		}
 	}
 	resp, err := client.Do(req)
+	defer resp.Body.Close()
 	if s.Debug {
 		dump, err := httputil.DumpResponse(resp, true)
 		if nil != err {
@@ -120,8 +122,16 @@ func (s *oss_agent) send_request() (*http.Response, error) {
 			s.logger.Printf("HTTP Response: %s", string(dump))
 		}
 	}
-	return resp, err
 
+	if err != nil {
+		return nil, "", err
+	}
+	if is_stream {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return resp, string(body), nil
+	} else {
+		return resp, "", nil
+	}
 }
 
 func New(access_key string, access_key_secret string, endpoint interface{}, debug interface{}) *AliOSSClient {
