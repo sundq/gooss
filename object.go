@@ -1,6 +1,7 @@
 package aliyunoss
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 )
@@ -51,7 +52,7 @@ func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string
 		CanonicalizedHeaders: make(map[string]string),
 		CanonicalizedUri:     uri,
 		CanonicalizedQuery:   query,
-		Content:              nil,
+		Content:              &bytes.Reader{},
 		ContentType:          "",
 		Debug:                c.Debug,
 		logger:               c.logger,
@@ -69,5 +70,43 @@ func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string
 	} else {
 		xml.Unmarshal(xml_result, e)
 		return &ObjectList{}, e
+	}
+}
+
+func (c *AliOSSClient) CreateObjectForBuff(bucket string, key string, data []byte, permission string) error {
+	uri := fmt.Sprintf("/%s/%s", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+
+	if permission == "" {
+		header["x-oss-acl"] = "private"
+	} else {
+		header["x-oss-acl"] = permission
+	}
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "PUT",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              bytes.NewReader(data),
+		ContentType:          "application/octet-stream",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode == 200 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
 	}
 }
