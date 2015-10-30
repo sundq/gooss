@@ -7,6 +7,12 @@ import (
 	"testing"
 )
 
+const (
+	test_bucket  = "xiagnjun129866"
+	test_object  = "test44444444444"
+	test_content = "aliyun oss test"
+)
+
 func getAk() (string, string) {
 	data, _ := ioutil.ReadFile("./data.txt")
 	data_parse := strings.Split(string(data), ":")
@@ -58,10 +64,45 @@ func TestListBucket(t *testing.T) {
 // 	}
 // }
 
-func TestCreateObjectForBuff(t *testing.T) {
+// func TestCreateObjectForBuff(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.CreateObjectForBuff(test_bucket, test_object, []byte(test_content), "")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log()
+// 	}
+// }
+
+func TestGetObjectAsBuff(t *testing.T) {
 	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, true)
-	err := c.CreateObjectForBuff("xiagnjun129866", "test44444444444", []byte("sssdddddddddyyy"), "")
+	c := New(accesskey, access_key_secret, nil, false)
+	result, err := c.GetObjectAsBuffer(test_bucket, test_object)
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(string(result))
+	}
+}
+
+func TestGetObjectAsFile(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	err := c.GetObjectAsFile(test_bucket, test_object, "test.txt")
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log()
+	}
+
+	// defer os.Remove("test.txt")
+}
+
+func TestDeleteObject(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	err := c.DeleteObject(test_bucket, test_object)
 	if err != nil {
 		t.Error(err)
 	} else {

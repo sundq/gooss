@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 )
 
 type Object struct {
@@ -106,6 +109,108 @@ func (c *AliOSSClient) CreateObjectForBuff(bucket string, key string, data []byt
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
+func (c *AliOSSClient) DeleteObject(bucket string, key string) error {
+	uri := fmt.Sprintf("/%s/%s", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "DELETE",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
+func (c *AliOSSClient) GetObjectAsBuffer(bucket string, key string) ([]byte, error) {
+	uri := fmt.Sprintf("/%s/%s", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return xml_result, err
+	}
+	if resp.StatusCode == 200 {
+		return xml_result, nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return xml_result, e
+	}
+}
+
+func (c *AliOSSClient) GetObjectAsFile(bucket string, key string, filepath string) error {
+	uri := fmt.Sprintf("/%s/%s", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+
+	file, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, _, err := s.send_request(true)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		_, err := io.Copy(file, resp.Body)
+		defer resp.Body.Close()
+		return err
+	} else {
+		xml_result, _ := ioutil.ReadAll(resp.Body)
 		xml.Unmarshal(xml_result, e)
 		return e
 	}

@@ -127,7 +127,6 @@ func (s *oss_agent) send_request(is_stream bool) (*http.Response, []byte, error)
 		}
 	}
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
 	if s.Debug {
 		dump, err := httputil.DumpResponse(resp, true)
 		if nil != err {
@@ -142,6 +141,7 @@ func (s *oss_agent) send_request(is_stream bool) (*http.Response, []byte, error)
 	}
 	if !is_stream {
 		body, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
 		return resp, body, nil
 	} else {
 		return resp, nil, nil
