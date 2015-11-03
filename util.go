@@ -30,7 +30,7 @@ type oss_agent struct {
 	CanonicalizedHeaders map[string]string
 	CanonicalizedUri     string
 	CanonicalizedQuery   map[string]string
-	Content              *bytes.Reader //io.Reader
+	Content              io.Reader
 	ContentType          string
 	ContentMd5           string
 	Url                  string
@@ -76,7 +76,14 @@ func (s *oss_agent) calc_signature(date string) string {
 	sum := md5h.Sum(nil)
 	content_md5 = hex.EncodeToString(sum[:])
 	s.ContentMd5 = content_md5
-	s.Content.Seek(0, 0)
+
+	if value, ok := s.Content.(*bytes.Reader); ok {
+		value.Seek(0, 0)
+	}
+
+	if value, ok := s.Content.(*os.File); ok {
+		value.Seek(0, 0)
+	}
 
 	canonicalized_resource_str := s.CanonicalizedUri
 

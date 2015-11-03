@@ -114,6 +114,50 @@ func (c *AliOSSClient) CreateObjectForBuff(bucket string, key string, data []byt
 	}
 }
 
+func (c *AliOSSClient) CreateObjectForFile(bucket string, key string, filepath string, permission string) error {
+	uri := fmt.Sprintf("/%s/%s", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+
+	file, err := os.Open(filepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	if permission == "" {
+		header["x-oss-acl"] = "private"
+	} else {
+		header["x-oss-acl"] = permission
+	}
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "PUT",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              file,
+		ContentType:          "application/octet-stream",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode == 200 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
 func (c *AliOSSClient) DeleteObject(bucket string, key string) error {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)

@@ -100,7 +100,40 @@ func (c *AliOSSClient) CreateBucket(name string, location string, permission str
 	if err != nil {
 		return err
 	}
-	if resp.StatusCode == 200 {
+	if resp.StatusCode/100 == 2 {
+		xml.Unmarshal(xml_result, v)
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
+func (c *AliOSSClient) DeleteBucket(name string) error {
+	uri := fmt.Sprintf("/%s/", name)
+	query := make(map[string]string)
+	header := make(map[string]string)
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "DELETE",
+		Url:                  fmt.Sprintf("http://%s.%s", name, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &BucketList{}
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
 		xml.Unmarshal(xml_result, v)
 		return nil
 	} else {

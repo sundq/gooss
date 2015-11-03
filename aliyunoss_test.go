@@ -8,9 +8,11 @@ import (
 )
 
 const (
-	test_bucket  = "xiagnjun129866"
-	test_object  = "test44444444444"
-	test_content = "aliyun oss test"
+	test_bucket        = "xiagnjun129866"
+	test_object        = "test44444444444"
+	test_object1       = "test_1"
+	test_content       = "aliyun oss test"
+	test_create_bucket = "test-create"
 )
 
 func getAk() (string, string) {
@@ -19,21 +21,32 @@ func getAk() (string, string) {
 	return data_parse[0], data_parse[1]
 }
 
-func TestListBucket(t *testing.T) {
-	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	result, err := c.ListBucket("", "", 1)
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Log(result)
-	}
-}
+// func TestListBucket(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	result, err := c.ListBucket("", "", 1)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(result)
+// 	}
+// }
 
 // func TestCreateBucket(t *testing.T) {
 // 	accesskey, access_key_secret := getAk()
 // 	c := New(accesskey, access_key_secret, nil, false)
-// 	err := c.CreateBucket("fff", "oss-cn-hangzhou", "")
+// 	err := c.CreateBucket(test_create_bucket, "oss-cn-hangzhou", "")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log()
+// 	}
+// }
+
+// func TestDeleteBucket(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.DeleteBucket(test_create_bucket)
 // 	if err != nil {
 // 		t.Error(err)
 // 	} else {
@@ -75,37 +88,48 @@ func TestListBucket(t *testing.T) {
 // 	}
 // }
 
-func TestGetObjectAsBuff(t *testing.T) {
+func TestCreateObjectForFile(t *testing.T) {
 	accesskey, access_key_secret := getAk()
 	c := New(accesskey, access_key_secret, nil, false)
-	result, err := c.GetObjectAsBuffer(test_bucket, test_object)
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Log(string(result))
-	}
-}
-
-func TestGetObjectAsFile(t *testing.T) {
-	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	err := c.GetObjectAsFile(test_bucket, test_object, "test.txt")
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Log()
-	}
-
-	// defer os.Remove("test.txt")
-}
-
-func TestDeleteObject(t *testing.T) {
-	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	err := c.DeleteObject(test_bucket, test_object)
+	err := c.CreateObjectForFile(test_bucket, test_object1, "test.txt", "")
 	if err != nil {
 		t.Error(err)
 	} else {
 		t.Log()
 	}
 }
+
+// func TestGetObjectAsBuff(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	result, err := c.GetObjectAsBuffer(test_bucket, test_object)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(string(result))
+// 	}
+// }
+
+// func TestGetObjectAsFile(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.GetObjectAsFile(test_bucket, test_object, "test.txt")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log()
+// 	}
+
+// 	// defer os.Remove("test.txt")
+// }
+
+// func TestDeleteObject(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.DeleteObject(test_bucket, test_object)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log()
+// 	}
+// }
