@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 )
 
 type Object struct {
@@ -158,6 +159,42 @@ func (c *AliOSSClient) CreateObjectForFile(bucket string, key string, filepath s
 	}
 }
 
+func (c *AliOSSClient) AppendObjectForBuff(bucket string, key string, position int, data []byte) (int, string, error) {
+	uri := fmt.Sprintf("/%s/%s?append&position=%d", bucket, key, position)
+	query := make(map[string]string)
+	header := make(map[string]string)
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "POST",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              bytes.NewReader(data),
+		ContentType:          "application/octet-stream",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, _, err := s.send_request(true)
+	if err != nil {
+		return 0, "", err
+	} else {
+		defer resp.Body.Close()
+	}
+	if resp.StatusCode/100 == 2 {
+		position, _ := strconv.Atoi(resp.Header.Get("x-oss-next-append-position"))
+		return position, resp.Header.Get("x-oss-hash-crc64ecma"), nil
+	} else {
+		xml_result, _ := ioutil.ReadAll(resp.Body)
+		xml.Unmarshal(xml_result, e)
+		return 0, "", e
+	}
+}
+
 func (c *AliOSSClient) DeleteObject(bucket string, key string) error {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -248,10 +285,11 @@ func (c *AliOSSClient) GetObjectAsFile(bucket string, key string, filepath strin
 	resp, _, err := s.send_request(true)
 	if err != nil {
 		return err
+	} else {
+		defer resp.Body.Close()
 	}
 	if resp.StatusCode/100 == 2 {
 		_, err := io.Copy(file, resp.Body)
-		defer resp.Body.Close()
 		return err
 	} else {
 		xml_result, _ := ioutil.ReadAll(resp.Body)

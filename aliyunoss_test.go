@@ -11,6 +11,7 @@ const (
 	test_bucket        = "xiagnjun129866"
 	test_object        = "test44444444444"
 	test_object1       = "test_1"
+	test_append_object = "test_2"
 	test_content       = "aliyun oss test"
 	test_create_bucket = "test-create"
 )
@@ -88,16 +89,16 @@ func getAk() (string, string) {
 // 	}
 // }
 
-func TestCreateObjectForFile(t *testing.T) {
-	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	err := c.CreateObjectForFile(test_bucket, test_object1, "test.txt", "")
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Log()
-	}
-}
+// func TestCreateObjectForFile(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.CreateObjectForFile(test_bucket, test_object1, "test.txt", "")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log()
+// 	}
+// }
 
 // func TestGetObjectAsBuff(t *testing.T) {
 // 	accesskey, access_key_secret := getAk()
@@ -133,3 +134,14 @@ func TestCreateObjectForFile(t *testing.T) {
 // 		t.Log()
 // 	}
 // }
+
+func TestAppendObject(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	next_position, crc64, err := c.AppendObjectForBuff(test_bucket, test_append_object, 0, []byte(test_content))
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(next_position, crc64)
+	}
+}
