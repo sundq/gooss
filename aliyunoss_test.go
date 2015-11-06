@@ -135,13 +135,24 @@ func getAk() (string, string) {
 // 	}
 // }
 
-func TestAppendObject(t *testing.T) {
+// func TestAppendObject(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	next_position, crc64, err := c.AppendObjectForBuff(test_bucket, test_append_object, 0, []byte(test_content))
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(next_position, crc64)
+// 	}
+// }
+
+func TestDeleteMultiObject(t *testing.T) {
 	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	next_position, crc64, err := c.AppendObjectForBuff(test_bucket, test_append_object, 0, []byte(test_content))
+	c := New(accesskey, access_key_secret, nil, true)
+	err := c.DeleteMultiObject(test_bucket, []string{"a", "v"})
 	if err != nil {
 		t.Error(err)
 	} else {
-		t.Log(next_position, crc64)
+		t.Log(err)
 	}
 }

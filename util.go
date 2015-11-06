@@ -6,7 +6,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/base64"
-	"encoding/hex"
+	// "encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -74,7 +74,7 @@ func (s *oss_agent) calc_signature(date string) string {
 	md5h := md5.New()
 	io.Copy(md5h, s.Content)
 	sum := md5h.Sum(nil)
-	content_md5 = hex.EncodeToString(sum[:])
+	content_md5 = base64.StdEncoding.EncodeToString(sum[:])
 	s.ContentMd5 = content_md5
 
 	if value, ok := s.Content.(*bytes.Reader); ok {
@@ -87,7 +87,7 @@ func (s *oss_agent) calc_signature(date string) string {
 
 	canonicalized_resource_str := s.CanonicalizedUri
 
-	signature_ele := []string{s.Verb, "", s.ContentType, date, sorted_canonicalized_headers_str + canonicalized_resource_str}
+	signature_ele := []string{s.Verb, content_md5, s.ContentType, date, sorted_canonicalized_headers_str + canonicalized_resource_str}
 	signature_str := strings.Join(signature_ele, "\n")
 	if s.Debug {
 		s.logger.Println("signature string:", signature_str)
@@ -111,7 +111,9 @@ func (s *oss_agent) send_request(is_stream bool) (*http.Response, []byte, error)
 
 	req.Header.Add("Date", date)
 	req.Header.Add("Authorization", fmt.Sprintf("OSS %s:%s", s.AccessKey, sig))
-	// req.Header.Add("Content-Md5", s.ContentMd5)
+	req.Header.Add("Content-Md5", s.ContentMd5)
+	// req.Header.Add("Content-Length", fmt.Sprintf("%d", s.ContentLength))
+	// s.logger.Println("Info content length:", fmt.Sprintf("%d", s.ContentLength))
 	if s.ContentType != "" {
 		req.Header.Add("Content-Type", s.ContentType)
 	}

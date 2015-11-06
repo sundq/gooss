@@ -28,6 +28,16 @@ type ObjectList struct {
 	Objects    []Object `xml:"Contents"`
 }
 
+type DeleteObject struct {
+	Object string `xml:"Key"`
+}
+
+type DeleteObjectList struct {
+	XMLName xml.Name       `xml:"Delete"`
+	Quiet   string         `xml:"Quiet"`
+	Objects []DeleteObject `xml:"Object"`
+}
+
 func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string, max_size int, prefix string) (*ObjectList, error) {
 	uri := fmt.Sprintf("/%s/", bucket)
 	query := make(map[string]string)
@@ -209,6 +219,45 @@ func (c *AliOSSClient) DeleteObject(bucket string, key string) error {
 		CanonicalizedUri:     uri,
 		CanonicalizedQuery:   query,
 		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
+func (c *AliOSSClient) DeleteMultiObject(bucket string, keys []string) error {
+	uri := fmt.Sprintf("/%s/?delete", bucket)
+	query := make(map[string]string)
+	header := make(map[string]string)
+
+	objs := []DeleteObject{}
+	for _, value := range keys {
+		objs = append(objs, DeleteObject{value})
+	}
+
+	tmp := DeleteObjectList{Quiet: "true", Objects: objs}
+	xml_content, _ := xml.MarshalIndent(tmp, "", "  ")
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "POST",
+		Url:                  fmt.Sprintf("http://%s.%s/?delete", bucket, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              bytes.NewReader([]byte(xml.Header + string(xml_content))),
 		Debug:                c.Debug,
 		logger:               c.logger,
 	}
