@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
 )
@@ -344,5 +345,37 @@ func (c *AliOSSClient) GetObjectAsFile(bucket string, key string, filepath strin
 		xml_result, _ := ioutil.ReadAll(resp.Body)
 		xml.Unmarshal(xml_result, e)
 		return e
+	}
+}
+
+func (c *AliOSSClient) GetObjectInfo(bucket string, key string) (http.Header, error) {
+	uri := fmt.Sprintf("/%s/%s", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "HEAD",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	resp, _, err := s.send_request(true)
+	if err != nil {
+		return nil, err
+	} else {
+		defer resp.Body.Close()
+	}
+	if resp.StatusCode/100 == 2 {
+		return resp.Header, nil
+	} else {
+		e := &AliOssError{Code: "NotFound", Message: "the object does not exist."}
+		return nil, e
 	}
 }

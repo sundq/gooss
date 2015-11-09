@@ -112,8 +112,6 @@ func (s *oss_agent) send_request(is_stream bool) (*http.Response, []byte, error)
 	req.Header.Add("Date", date)
 	req.Header.Add("Authorization", fmt.Sprintf("OSS %s:%s", s.AccessKey, sig))
 	req.Header.Add("Content-Md5", s.ContentMd5)
-	// req.Header.Add("Content-Length", fmt.Sprintf("%d", s.ContentLength))
-	// s.logger.Println("Info content length:", fmt.Sprintf("%d", s.ContentLength))
 	if s.ContentType != "" {
 		req.Header.Add("Content-Type", s.ContentType)
 	}

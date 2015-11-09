@@ -78,16 +78,16 @@ func getAk() (string, string) {
 // 	}
 // }
 
-// func TestCreateObjectForBuff(t *testing.T) {
-// 	accesskey, access_key_secret := getAk()
-// 	c := New(accesskey, access_key_secret, nil, false)
-// 	err := c.CreateObjectForBuff(test_bucket, test_object, []byte(test_content), "")
-// 	if err != nil {
-// 		t.Error(err)
-// 	} else {
-// 		t.Log()
-// 	}
-// }
+func TestCreateObjectForBuff(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	err := c.CreateObjectForBuff(test_bucket, test_object, []byte(test_content), "")
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log()
+	}
+}
 
 // func TestCreateObjectForFile(t *testing.T) {
 // 	accesskey, access_key_secret := getAk()
@@ -146,13 +146,24 @@ func getAk() (string, string) {
 // 	}
 // }
 
-func TestDeleteMultiObject(t *testing.T) {
+// func TestDeleteMultiObject(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, true)
+// 	err := c.DeleteMultiObject(test_bucket, []string{"a", "v"})
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(err)
+// 	}
+// }
+
+func TestGetObjectInfo(t *testing.T) {
 	accesskey, access_key_secret := getAk()
 	c := New(accesskey, access_key_secret, nil, true)
-	err := c.DeleteMultiObject(test_bucket, []string{"a", "v"})
+	result, err := c.GetObjectInfo(test_bucket, test_object)
 	if err != nil {
 		t.Error(err)
 	} else {
-		t.Log(err)
+		t.Log(result)
 	}
 }
