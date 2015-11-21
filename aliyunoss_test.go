@@ -78,16 +78,16 @@ func getAk() (string, string) {
 // 	}
 // }
 
-func TestCreateObjectForBuff(t *testing.T) {
-	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	err := c.CreateObjectForBuff(test_bucket, test_object, []byte(test_content), "")
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Log()
-	}
-}
+// func TestCreateObjectForBuff(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.CreateObjectForBuff(test_bucket, test_object, []byte(test_content), "")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log()
+// 	}
+// }
 
 // func TestCreateObjectForFile(t *testing.T) {
 // 	accesskey, access_key_secret := getAk()
@@ -157,13 +157,79 @@ func TestCreateObjectForBuff(t *testing.T) {
 // 	}
 // }
 
-func TestGetObjectInfo(t *testing.T) {
+// func TestGetObjectInfo(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, true)
+// 	result, err := c.GetObjectInfo(test_bucket, test_object)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(result)
+// 	}
+// }
+
+// func TestModifyBucketAcl(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.ModifyBucketAcl(test_bucket, "public-read")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(err)
+// 	}
+// }
+
+// func TestModifyBucketAcl1(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.ModifyBucketAcl(test_bucket, "")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(err)
+// 	}
+// }
+
+// func TestOpenBucketLogging(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, true)
+// 	err := c.OpenBucketLogging(test_bucket, test_bucket, "log-")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(err)
+// 	}
+// }
+
+// func TestCloseBucketLogging(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, true)
+// 	err := c.CloseBucketLogging(test_bucket)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(err)
+// 	}
+// }
+
+// func TestCreateBucketWebsite(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, true)
+// 	err := c.CreateBucketWebsite(test_bucket, "index.html", "")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(err)
+// 	}
+// }
+
+func TestAddBucketRefer(t *testing.T) {
 	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, true)
-	result, err := c.GetObjectInfo(test_bucket, test_object)
+	c := New(accesskey, access_key_secret, nil, false)
+	err := c.AddBucketRefer(test_bucket, false, []string{"ss", "rrr"})
 	if err != nil {
 		t.Error(err)
 	} else {
-		t.Log(result)
+		t.Log(err)
 	}
 }
