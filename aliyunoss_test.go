@@ -223,13 +223,24 @@ func getAk() (string, string) {
 // 	}
 // }
 
-func TestAddBucketRefer(t *testing.T) {
+// func TestAddBucketRefer(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.AddBucketRefer(test_bucket, false, []string{"ss", "rrr"})
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(err)
+// 	}
+// }
+
+func TestGetBucketAcl(t *testing.T) {
 	accesskey, access_key_secret := getAk()
 	c := New(accesskey, access_key_secret, nil, false)
-	err := c.AddBucketRefer(test_bucket, false, []string{"ss", "rrr"})
+	r, err := c.GetBucketAcl(test_bucket)
 	if err != nil {
 		t.Error(err)
 	} else {
-		t.Log(err)
+		t.Log(r)
 	}
 }

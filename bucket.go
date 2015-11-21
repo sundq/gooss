@@ -27,6 +27,35 @@ type BucketLogging struct {
 	LocationConstraint string   `xml:LocationConstraint`
 }
 
+type LifecycleRuleExpireDay struct {
+	Day string `xml:Day`
+}
+
+type LifecycleRuleExpireDays struct {
+	Days int `xml:Days`
+}
+
+type LifecycleRule struct {
+	RuleID     string      `xml:Rule`
+	Prefix     string      `xml:Prefix`
+	Status     string      `xml:Status` //Disabled Enabled
+	Expiration interface{} `xml:Expiration`
+}
+
+type Lifecycle struct {
+	XMLName xml.Name        `xml:"LifecycleConfiguration"`
+	Rule    []LifecycleRule `xml:Rule`
+}
+
+type AccessControl struct {
+	Grant string `xml:"Grant"`
+}
+
+type BucketACL struct {
+	XMLName           xml.Name      `xml:"AccessControlPolicy"`
+	AccessControlList AccessControl `xml:AccessControlList`
+}
+
 func (c *AliOSSClient) ListBucket(prefix string, marker string, max_size int) (*BucketList, error) {
 	uri := "/"
 	query := make(map[string]string)
@@ -327,14 +356,12 @@ func (c *AliOSSClient) CreateBucketWebsite(name string, index string, error_file
 		logger:               c.logger,
 	}
 
-	v := &BucketList{}
 	e := &AliOssError{}
 	resp, xml_result, err := s.send_request(false)
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode/100 == 2 {
-		xml.Unmarshal(xml_result, v)
 		return nil
 	} else {
 		xml.Unmarshal(xml_result, e)
@@ -372,17 +399,84 @@ func (c *AliOSSClient) AddBucketRefer(name string, allow_empty_referer bool, ref
 		logger:               c.logger,
 	}
 
-	v := &BucketList{}
 	e := &AliOssError{}
 	resp, xml_result, err := s.send_request(false)
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode/100 == 2 {
-		xml.Unmarshal(xml_result, v)
 		return nil
 	} else {
 		xml.Unmarshal(xml_result, e)
 		return e
+	}
+}
+
+func (c *AliOSSClient) CreateBucketLifecycleRule(name string, rule_list []LifecycleRule) error {
+	xml_content, _ := xml.MarshalIndent(&Lifecycle{Rule: rule_list}, "", "  ")
+	uri := fmt.Sprintf("/%s/?lifecycle", name)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["lifecycle"] = ""
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "PUT",
+		Url:                  fmt.Sprintf("http://%s.%s", name, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              bytes.NewReader([]byte(xml.Header + string(xml_content))),
+		ContentType:          "application/xml",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
+func (c *AliOSSClient) GetBucketAcl(name string) (string, error) {
+	uri := fmt.Sprintf("/%s/?acl", name)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["acl"] = ""
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s", name, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		ContentType:          "application/xml",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &BucketACL{}
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode/100 == 2 {
+		xml.Unmarshal(xml_result, v)
+		return v.AccessControlList.Grant, nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return "", e
 	}
 }
