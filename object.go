@@ -379,3 +379,102 @@ func (c *AliOSSClient) GetObjectInfo(bucket string, key string) (http.Header, er
 		return nil, e
 	}
 }
+
+func (c *AliOSSClient) GetObjectMetaData(bucket string, key string) (http.Header, error) {
+	uri := fmt.Sprintf("/%s/%s?objectMeta", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["objectMeta"] = ""
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	resp, _, err := s.send_request(true)
+	if err != nil {
+		return nil, err
+	} else {
+		defer resp.Body.Close()
+	}
+	if resp.StatusCode/100 == 2 {
+		return resp.Header, nil
+	} else {
+		e := &AliOssError{Code: "NotFound", Message: "the object does not exist."}
+		return nil, e
+	}
+}
+
+func (c *AliOSSClient) CreateObjectAcl(bucket string, key string, permission string) error {
+	uri := fmt.Sprintf("/%s/%s?acl", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["acl"] = ""
+	header["x-oss-object-acl"] = permission
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "PUT",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	resp, _, err := s.send_request(true)
+	if err != nil {
+		return err
+	} else {
+		defer resp.Body.Close()
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		e := &AliOssError{Code: "NotFound", Message: "the object does not exist."}
+		return e
+	}
+}
+
+func (c *AliOSSClient) GetObjectAcl(bucket string, key string) (*BucketACL, error) {
+	uri := fmt.Sprintf("/%s/%s?acl", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["acl"] = ""
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &BucketACL{}
+	resp, xml_content, err := s.send_request(false)
+	if err != nil {
+		return nil, err
+	} else {
+		defer resp.Body.Close()
+	}
+	if resp.StatusCode/100 == 2 {
+		xml.Unmarshal(xml_content, v)
+		return v, nil
+	} else {
+		e := &AliOssError{Code: "NotFound", Message: "the object does not exist."}
+		return nil, e
+	}
+}
