@@ -56,6 +56,29 @@ type BucketACL struct {
 	AccessControlList AccessControl `xml:AccessControlList`
 }
 
+type LoggingEnabled struct {
+	TargetBucket string `xml:"TargetBucket"`
+	TargetPrefix string `xml:"TargetPrefix"`
+}
+
+type BucketLog struct {
+	XMLName        xml.Name       `xml:"BucketLoggingStatus"`
+	LoggingEnabled LoggingEnabled `xml:LoggingEnabled`
+}
+
+type BucketWebsiteIndex struct {
+	Suffix string `xml:"Suffix"`
+}
+type BucketWebsiteErrorIndex struct {
+	Key string `xml:"Key"`
+}
+
+type BucketWebsite struct {
+	XMLName       xml.Name                `xml:"WebsiteConfiguration"`
+	IndexDocument BucketWebsiteIndex      `xml:"IndexDocument"`
+	ErrorDocument BucketWebsiteErrorIndex `xml:"ErrorDocument"`
+}
+
 func (c *AliOSSClient) ListBucket(prefix string, marker string, max_size int) (*BucketList, error) {
 	uri := "/"
 	query := make(map[string]string)
@@ -446,6 +469,74 @@ func (c *AliOSSClient) CreateBucketLifecycleRule(name string, rule_list []Lifecy
 	}
 }
 
+func (c *AliOSSClient) GetBucketLifecycleRule(name string) (*Lifecycle, error) {
+	uri := fmt.Sprintf("/%s/?lifecycle", name)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["lifecycle"] = ""
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s", name, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		ContentType:          "application/xml",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &Lifecycle{}
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode/100 == 2 {
+		xml.Unmarshal(xml_result, v)
+		return v, nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return nil, e
+	}
+}
+
+func (c *AliOSSClient) DeleteBucketLifecycleRule(name string) error {
+	uri := fmt.Sprintf("/%s/?lifecycle", name)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["lifecycle"] = ""
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "DELETE",
+		Url:                  fmt.Sprintf("http://%s.%s", name, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		ContentType:          "application/xml",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
 func (c *AliOSSClient) GetBucketAcl(name string) (string, error) {
 	uri := fmt.Sprintf("/%s/?acl", name)
 	query := make(map[string]string)
@@ -478,5 +569,108 @@ func (c *AliOSSClient) GetBucketAcl(name string) (string, error) {
 	} else {
 		xml.Unmarshal(xml_result, e)
 		return "", e
+	}
+}
+
+func (c *AliOSSClient) GetBucketLogging(name string) (string, string, error) {
+	uri := fmt.Sprintf("/%s/?logging", name)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["logging"] = ""
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s", name, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		ContentType:          "application/xml",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &BucketLog{}
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return "", "", err
+	}
+	if resp.StatusCode/100 == 2 {
+		xml.Unmarshal(xml_result, v)
+		return v.LoggingEnabled.TargetBucket, v.LoggingEnabled.TargetPrefix, nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return "", "", e
+	}
+}
+
+func (c *AliOSSClient) GetBucketWebsite(name string) (*BucketWebsite, error) {
+	uri := fmt.Sprintf("/%s/?website", name)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["website"] = ""
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s", name, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		ContentType:          "application/xml",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &BucketWebsite{}
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode/100 == 2 {
+		xml.Unmarshal(xml_result, v)
+		return v, nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return nil, e
+	}
+}
+
+func (c *AliOSSClient) DeleteBucketWebsite(name string) error {
+	uri := fmt.Sprintf("/%s/?website", name)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["website"] = ""
+
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "DELETE",
+		Url:                  fmt.Sprintf("http://%s.%s", name, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		ContentType:          "application/xml",
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
 	}
 }

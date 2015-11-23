@@ -192,7 +192,7 @@ func getAk() (string, string) {
 
 // func TestOpenBucketLogging(t *testing.T) {
 // 	accesskey, access_key_secret := getAk()
-// 	c := New(accesskey, access_key_secret, nil, true)
+// 	c := New(accesskey, access_key_secret, nil, false)
 // 	err := c.OpenBucketLogging(test_bucket, test_bucket, "log-")
 // 	if err != nil {
 // 		t.Error(err)
@@ -201,9 +201,20 @@ func getAk() (string, string) {
 // 	}
 // }
 
+// func TestGetBucketLogging(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	p, r, err := c.GetBucketLogging(test_bucket)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(p, r)
+// 	}
+// }
+
 // func TestCloseBucketLogging(t *testing.T) {
 // 	accesskey, access_key_secret := getAk()
-// 	c := New(accesskey, access_key_secret, nil, true)
+// 	c := New(accesskey, access_key_secret, nil, false)
 // 	err := c.CloseBucketLogging(test_bucket)
 // 	if err != nil {
 // 		t.Error(err)
@@ -212,16 +223,72 @@ func getAk() (string, string) {
 // 	}
 // }
 
-// func TestCreateBucketWebsite(t *testing.T) {
-// 	accesskey, access_key_secret := getAk()
-// 	c := New(accesskey, access_key_secret, nil, true)
-// 	err := c.CreateBucketWebsite(test_bucket, "index.html", "")
-// 	if err != nil {
-// 		t.Error(err)
-// 	} else {
-// 		t.Log(err)
-// 	}
-// }
+func TestCreateBucketWebsite(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, true)
+	err := c.CreateBucketWebsite(test_bucket, "index.html", "")
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(err)
+	}
+}
+
+func TestGetBucketWebsite(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	r, err := c.GetBucketWebsite(test_bucket)
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(r)
+	}
+}
+
+func TestDeleteBucketWebsite(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	err := c.DeleteBucketWebsite(test_bucket)
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(err)
+	}
+}
+
+func TestCreateBucketLifecycleRule(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	rule := []LifecycleRule{{Prefix: "test-", Status: "Disabled", Expiration: LifecycleRuleExpireDays{Days: 6}}}
+	c := New(accesskey, access_key_secret, nil, true)
+	err := c.CreateBucketLifecycleRule(test_bucket, rule)
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(err)
+	}
+}
+
+func TestGetBucketLifecycleRule(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	r, err := c.GetBucketLifecycleRule(test_bucket)
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(r)
+	}
+}
+
+func TestDeleteBucketLifecycleRule(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	err := c.DeleteBucketLifecycleRule(test_bucket)
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(err)
+	}
+}
 
 // func TestAddBucketRefer(t *testing.T) {
 // 	accesskey, access_key_secret := getAk()
@@ -234,13 +301,13 @@ func getAk() (string, string) {
 // 	}
 // }
 
-func TestGetBucketAcl(t *testing.T) {
-	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	r, err := c.GetBucketAcl(test_bucket)
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Log(r)
-	}
-}
+// func TestGetBucketAcl(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	r, err := c.GetBucketAcl(test_bucket)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(r)
+// 	}
+// }
