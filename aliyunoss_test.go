@@ -312,32 +312,43 @@ func getAk() (string, string) {
 // 	}
 // }
 
-func TestGetObjectMetaData(t *testing.T) {
-	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	r, err := c.GetObjectMetaData(test_bucket, test_object)
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Log(r)
-	}
-}
+// func TestGetObjectMetaData(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, true)
+// 	r, err := c.GetObjectMetaData(test_bucket, test_object)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(r)
+// 	}
+// }
 
-func TestCreateObjectAcl(t *testing.T) {
-	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	err := c.CreateObjectAcl(test_bucket, test_object, "private")
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Log()
-	}
-}
+// func TestCreateObjectAcl(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	err := c.CreateObjectAcl(test_bucket, test_object, "private")
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log()
+// 	}
+// }
 
-func TestGetObjectAcl(t *testing.T) {
+// func TestGetObjectAcl(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	r, err := c.GetObjectAcl(test_bucket, test_object)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(r)
+// 	}
+// }
+
+func TestGetInitMultipartUpload(t *testing.T) {
 	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, false)
-	r, err := c.GetObjectAcl(test_bucket, test_object)
+	c := New(accesskey, access_key_secret, nil, true)
+	r, err := c.GetInitMultipartUpload(test_bucket, test_object)
 	if err != nil {
 		t.Error(err)
 	} else {

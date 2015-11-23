@@ -39,6 +39,22 @@ type DeleteObjectList struct {
 	Objects []DeleteObject `xml:"Object"`
 }
 
+type MultiUploadInit struct {
+	XMLName  xml.Name `xml:"InitiateMultipartUploadResult"`
+	Bucket   string   `xml:"Bucket"`
+	Key      string   `xml:"Key"`
+	UploadId string   `xml:"UploadId"`
+}
+
+type PartUpload struct {
+	PartNumber int    `xml:"PartNumber"`
+	ETag       string `xml:"ETag"`
+}
+type CompleteUpload struct {
+	XMLName xml.Name     `xml:"CompleteMultipartUpload"`
+	Part    []PartUpload `xml:"Part"`
+}
+
 func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string, max_size int, prefix string) (*ObjectList, error) {
 	uri := fmt.Sprintf("/%s/", bucket)
 	query := make(map[string]string)
@@ -381,7 +397,7 @@ func (c *AliOSSClient) GetObjectInfo(bucket string, key string) (http.Header, er
 }
 
 func (c *AliOSSClient) GetObjectMetaData(bucket string, key string) (http.Header, error) {
-	uri := fmt.Sprintf("/%s/%s?objectMeta", bucket, key)
+	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
 	header := make(map[string]string)
 	query["objectMeta"] = ""
@@ -398,16 +414,15 @@ func (c *AliOSSClient) GetObjectMetaData(bucket string, key string) (http.Header
 		logger:               c.logger,
 	}
 
-	resp, _, err := s.send_request(true)
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
 	if err != nil {
 		return nil, err
-	} else {
-		defer resp.Body.Close()
 	}
 	if resp.StatusCode/100 == 2 {
 		return resp.Header, nil
 	} else {
-		e := &AliOssError{Code: "NotFound", Message: "the object does not exist."}
+		xml.Unmarshal(xml_result, e)
 		return nil, e
 	}
 }
@@ -431,16 +446,15 @@ func (c *AliOSSClient) CreateObjectAcl(bucket string, key string, permission str
 		logger:               c.logger,
 	}
 
-	resp, _, err := s.send_request(true)
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
 	if err != nil {
 		return err
-	} else {
-		defer resp.Body.Close()
 	}
 	if resp.StatusCode/100 == 2 {
 		return nil
 	} else {
-		e := &AliOssError{Code: "NotFound", Message: "the object does not exist."}
+		xml.Unmarshal(xml_result, e)
 		return e
 	}
 }
@@ -464,17 +478,114 @@ func (c *AliOSSClient) GetObjectAcl(bucket string, key string) (*BucketACL, erro
 	}
 
 	v := &BucketACL{}
-	resp, xml_content, err := s.send_request(false)
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
 	if err != nil {
 		return nil, err
-	} else {
-		defer resp.Body.Close()
 	}
 	if resp.StatusCode/100 == 2 {
-		xml.Unmarshal(xml_content, v)
+		xml.Unmarshal(xml_result, v)
 		return v, nil
 	} else {
-		e := &AliOssError{Code: "NotFound", Message: "the object does not exist."}
+		xml.Unmarshal(xml_result, e)
 		return nil, e
+	}
+}
+
+func (c *AliOSSClient) GetInitMultipartUpload(bucket string, key string) (*MultiUploadInit, error) {
+	uri := fmt.Sprintf("/%s/%s?uploads", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["uploads"] = ""
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "POST",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &MultiUploadInit{}
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode/100 == 2 {
+		xml.Unmarshal(xml_result, v)
+		return v, nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return nil, e
+	}
+}
+
+func (c *AliOSSClient) UploadPart(bucket string, key string, part_number int, upload_id string, data []byte) error {
+	uri := fmt.Sprintf("/%s", key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["partNumber"] = fmt.Sprintf("%d", part_number)
+	query["uploadId"] = upload_id
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "POST",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              bytes.NewReader(data),
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
+func (c *AliOSSClient) CompleteUploadPart(bucket string, key string, upload_id string, part []PartUpload) error {
+	data := CompleteUpload{Part: part}
+	xml_content, _ := xml.MarshalIndent(data, "", "  ")
+	uri := fmt.Sprintf("/%s/%s?uploads", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["uploadId"] = upload_id
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "POST",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              bytes.NewReader([]byte(xml.Header + string(xml_content))),
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
 	}
 }
