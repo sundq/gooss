@@ -1,6 +1,6 @@
 # aliyunoss
 --
-    import "."
+    import "github.com/sundq/gooss"
 
 
 ## Usage
@@ -23,201 +23,6 @@ type AliOSSClient struct {
 	EndPoint        string
 	Debug           bool
 }
-```
-
-
-#### func  New
-
-```go
-func New(access_key string, access_key_secret string, endpoint interface{}, debug interface{}) *AliOSSClient
-```
-
-#### func (*AliOSSClient) AddBucketRefer
-
-```go
-func (c *AliOSSClient) AddBucketRefer(name string, allow_empty_referer bool, refer_list []string) error
-```
-
-#### func (*AliOSSClient) AppendObjectForBuff
-
-```go
-func (c *AliOSSClient) AppendObjectForBuff(bucket string, key string, position int, data []byte) (int, string, error)
-```
-
-#### func (*AliOSSClient) CloseBucketLogging
-
-```go
-func (c *AliOSSClient) CloseBucketLogging(name string) error
-```
-
-#### func (*AliOSSClient) CompleteUploadPart
-
-```go
-func (c *AliOSSClient) CompleteUploadPart(bucket string, key string, upload_id string, part []PartUpload) error
-```
-
-#### func (*AliOSSClient) CreateBucket
-
-```go
-func (c *AliOSSClient) CreateBucket(name string, location string, permission string) error
-```
-
-#### func (*AliOSSClient) CreateBucketLifecycleRule
-
-```go
-func (c *AliOSSClient) CreateBucketLifecycleRule(name string, rule_list []LifecycleRule) error
-```
-
-#### func (*AliOSSClient) CreateBucketWebsite
-
-```go
-func (c *AliOSSClient) CreateBucketWebsite(name string, index string, error_file string) error
-```
-
-#### func (*AliOSSClient) CreateObjectAcl
-
-```go
-func (c *AliOSSClient) CreateObjectAcl(bucket string, key string, permission string) error
-```
-
-#### func (*AliOSSClient) CreateObjectForBuff
-
-```go
-func (c *AliOSSClient) CreateObjectForBuff(bucket string, key string, data []byte, permission string) error
-```
-
-#### func (*AliOSSClient) CreateObjectForFile
-
-```go
-func (c *AliOSSClient) CreateObjectForFile(bucket string, key string, filepath string, permission string) error
-```
-
-#### func (*AliOSSClient) DeleteBucket
-
-```go
-func (c *AliOSSClient) DeleteBucket(name string) error
-```
-Delete bucket
-
-#### func (*AliOSSClient) DeleteBucketLifecycleRule
-
-```go
-func (c *AliOSSClient) DeleteBucketLifecycleRule(name string) error
-```
-
-#### func (*AliOSSClient) DeleteBucketWebsite
-
-```go
-func (c *AliOSSClient) DeleteBucketWebsite(name string) error
-```
-
-#### func (*AliOSSClient) DeleteMultiObject
-
-```go
-func (c *AliOSSClient) DeleteMultiObject(bucket string, keys []string) error
-```
-
-#### func (*AliOSSClient) DeleteObject
-
-```go
-func (c *AliOSSClient) DeleteObject(bucket string, key string) error
-```
-
-#### func (*AliOSSClient) GetBucketAcl
-
-```go
-func (c *AliOSSClient) GetBucketAcl(name string) (string, error)
-```
-
-#### func (*AliOSSClient) GetBucketLifecycleRule
-
-```go
-func (c *AliOSSClient) GetBucketLifecycleRule(name string) (*Lifecycle, error)
-```
-
-#### func (*AliOSSClient) GetBucketLogging
-
-```go
-func (c *AliOSSClient) GetBucketLogging(name string) (string, string, error)
-```
-
-#### func (*AliOSSClient) GetBucketWebsite
-
-```go
-func (c *AliOSSClient) GetBucketWebsite(name string) (*BucketWebsite, error)
-```
-
-#### func (*AliOSSClient) GetInitMultipartUpload
-
-```go
-func (c *AliOSSClient) GetInitMultipartUpload(bucket string, key string) (*MultiUploadInit, error)
-```
-
-#### func (*AliOSSClient) GetLocationOfBucket
-
-```go
-func (c *AliOSSClient) GetLocationOfBucket(bucket string) (string, error)
-```
-
-#### func (*AliOSSClient) GetObjectAcl
-
-```go
-func (c *AliOSSClient) GetObjectAcl(bucket string, key string) (*BucketACL, error)
-```
-
-#### func (*AliOSSClient) GetObjectAsBuffer
-
-```go
-func (c *AliOSSClient) GetObjectAsBuffer(bucket string, key string) ([]byte, error)
-```
-
-#### func (*AliOSSClient) GetObjectAsFile
-
-```go
-func (c *AliOSSClient) GetObjectAsFile(bucket string, key string, filepath string) error
-```
-
-#### func (*AliOSSClient) GetObjectInfo
-
-```go
-func (c *AliOSSClient) GetObjectInfo(bucket string, key string) (http.Header, error)
-```
-
-#### func (*AliOSSClient) GetObjectMetaData
-
-```go
-func (c *AliOSSClient) GetObjectMetaData(bucket string, key string) (http.Header, error)
-```
-
-#### func (*AliOSSClient) ListBucket
-
-```go
-func (c *AliOSSClient) ListBucket(prefix string, marker string, max_size int) (*BucketList, error)
-```
-
-#### func (*AliOSSClient) ListObject
-
-```go
-func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string, max_size int, prefix string) (*ObjectList, error)
-```
-ListObject get the list of key for the specified bucket
-
-#### func (*AliOSSClient) ModifyBucketAcl
-
-```go
-func (c *AliOSSClient) ModifyBucketAcl(name string, permission string) error
-```
-
-#### func (*AliOSSClient) OpenBucketLogging
-
-```go
-func (c *AliOSSClient) OpenBucketLogging(name string, target_bucket string, obj_prefix string) error
-```
-
-#### func (*AliOSSClient) UploadPart
-
-```go
-func (c *AliOSSClient) UploadPart(bucket string, key string, part_number int, upload_id string, data []byte) error
 ```
 
 #### type AliOssError
@@ -456,3 +261,200 @@ type PartUpload struct {
 	ETag       string `xml:"ETag"`
 }
 ```
+
+
+#### func  New
+
+```go
+func New(access_key string, access_key_secret string, endpoint interface{}, debug interface{}) *AliOSSClient
+```
+
+#### func (*AliOSSClient) AddBucketRefer
+
+```go
+func (c *AliOSSClient) AddBucketRefer(name string, allow_empty_referer bool, refer_list []string) error
+```
+
+#### func (*AliOSSClient) AppendObjectForBuff
+
+```go
+func (c *AliOSSClient) AppendObjectForBuff(bucket string, key string, position int, data []byte) (int, string, error)
+```
+
+#### func (*AliOSSClient) CloseBucketLogging
+
+```go
+func (c *AliOSSClient) CloseBucketLogging(name string) error
+```
+
+#### func (*AliOSSClient) CompleteUploadPart
+
+```go
+func (c *AliOSSClient) CompleteUploadPart(bucket string, key string, upload_id string, part []PartUpload) error
+```
+
+#### func (*AliOSSClient) CreateBucket
+
+```go
+func (c *AliOSSClient) CreateBucket(name string, location string, permission string) error
+```
+
+#### func (*AliOSSClient) CreateBucketLifecycleRule
+
+```go
+func (c *AliOSSClient) CreateBucketLifecycleRule(name string, rule_list []LifecycleRule) error
+```
+
+#### func (*AliOSSClient) CreateBucketWebsite
+
+```go
+func (c *AliOSSClient) CreateBucketWebsite(name string, index string, error_file string) error
+```
+
+#### func (*AliOSSClient) CreateObjectAcl
+
+```go
+func (c *AliOSSClient) CreateObjectAcl(bucket string, key string, permission string) error
+```
+
+#### func (*AliOSSClient) CreateObjectForBuff
+
+```go
+func (c *AliOSSClient) CreateObjectForBuff(bucket string, key string, data []byte, permission string) error
+```
+
+#### func (*AliOSSClient) CreateObjectForFile
+
+```go
+func (c *AliOSSClient) CreateObjectForFile(bucket string, key string, filepath string, permission string) error
+```
+
+#### func (*AliOSSClient) DeleteBucket
+
+```go
+func (c *AliOSSClient) DeleteBucket(name string) error
+```
+Delete bucket
+
+#### func (*AliOSSClient) DeleteBucketLifecycleRule
+
+```go
+func (c *AliOSSClient) DeleteBucketLifecycleRule(name string) error
+```
+
+#### func (*AliOSSClient) DeleteBucketWebsite
+
+```go
+func (c *AliOSSClient) DeleteBucketWebsite(name string) error
+```
+
+#### func (*AliOSSClient) DeleteMultiObject
+
+```go
+func (c *AliOSSClient) DeleteMultiObject(bucket string, keys []string) error
+```
+
+#### func (*AliOSSClient) DeleteObject
+
+```go
+func (c *AliOSSClient) DeleteObject(bucket string, key string) error
+```
+
+#### func (*AliOSSClient) GetBucketAcl
+
+```go
+func (c *AliOSSClient) GetBucketAcl(name string) (string, error)
+```
+
+#### func (*AliOSSClient) GetBucketLifecycleRule
+
+```go
+func (c *AliOSSClient) GetBucketLifecycleRule(name string) (*Lifecycle, error)
+```
+
+#### func (*AliOSSClient) GetBucketLogging
+
+```go
+func (c *AliOSSClient) GetBucketLogging(name string) (string, string, error)
+```
+
+#### func (*AliOSSClient) GetBucketWebsite
+
+```go
+func (c *AliOSSClient) GetBucketWebsite(name string) (*BucketWebsite, error)
+```
+
+#### func (*AliOSSClient) GetInitMultipartUpload
+
+```go
+func (c *AliOSSClient) GetInitMultipartUpload(bucket string, key string) (*MultiUploadInit, error)
+```
+
+#### func (*AliOSSClient) GetLocationOfBucket
+
+```go
+func (c *AliOSSClient) GetLocationOfBucket(bucket string) (string, error)
+```
+
+#### func (*AliOSSClient) GetObjectAcl
+
+```go
+func (c *AliOSSClient) GetObjectAcl(bucket string, key string) (*BucketACL, error)
+```
+
+#### func (*AliOSSClient) GetObjectAsBuffer
+
+```go
+func (c *AliOSSClient) GetObjectAsBuffer(bucket string, key string) ([]byte, error)
+```
+
+#### func (*AliOSSClient) GetObjectAsFile
+
+```go
+func (c *AliOSSClient) GetObjectAsFile(bucket string, key string, filepath string) error
+```
+
+#### func (*AliOSSClient) GetObjectInfo
+
+```go
+func (c *AliOSSClient) GetObjectInfo(bucket string, key string) (http.Header, error)
+```
+
+#### func (*AliOSSClient) GetObjectMetaData
+
+```go
+func (c *AliOSSClient) GetObjectMetaData(bucket string, key string) (http.Header, error)
+```
+
+#### func (*AliOSSClient) ListBucket
+
+```go
+func (c *AliOSSClient) ListBucket(prefix string, marker string, max_size int) (*BucketList, error)
+```
+
+#### func (*AliOSSClient) ListObject
+
+```go
+func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string, max_size int, prefix string) (*ObjectList, error)
+```
+ListObject get the list of key for the specified bucket
+
+#### func (*AliOSSClient) ModifyBucketAcl
+
+```go
+func (c *AliOSSClient) ModifyBucketAcl(name string, permission string) error
+```
+
+#### func (*AliOSSClient) OpenBucketLogging
+
+```go
+func (c *AliOSSClient) OpenBucketLogging(name string, target_bucket string, obj_prefix string) error
+```
+
+#### func (*AliOSSClient) UploadPart
+
+```go
+func (c *AliOSSClient) UploadPart(bucket string, key string, part_number int, upload_id string, data []byte) error
+```
+
+
