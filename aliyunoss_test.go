@@ -345,10 +345,21 @@ func getAk() (string, string) {
 // 	}
 // }
 
-func TestGetInitMultipartUpload(t *testing.T) {
+// func TestGetInitMultipartUpload(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, true)
+// 	r, err := c.GetInitMultipartUpload(test_bucket, test_object)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(r)
+// 	}
+// }
+
+func TestListMultiUploadPart(t *testing.T) {
 	accesskey, access_key_secret := getAk()
-	c := New(accesskey, access_key_secret, nil, true)
-	r, err := c.GetInitMultipartUpload(test_bucket, test_object)
+	c := New(accesskey, access_key_secret, nil, false)
+	r, err := c.ListMultiUploadPart(test_bucket)
 	if err != nil {
 		t.Error(err)
 	} else {

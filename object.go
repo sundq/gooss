@@ -54,6 +54,26 @@ type CompleteUpload struct {
 	Part    []PartUpload `xml:"Part"`
 }
 
+type MultiUpload struct {
+	Key       string `xml:"Key"`
+	UploadId  string `xml:"UploadId"`
+	Initiated string `xml:"Initiated"`
+}
+
+type MultiUploadList struct {
+	XMLName            xml.Name      `xml:"ListMultipartUploadsResult"`
+	Bucket             string        `xml:"Bucket"`
+	KeyMarker          string        `xml:"KeyMarker"`
+	UploadIdMarker     string        `xml:"UploadIdMarker"`
+	NextKeyMarker      string        `xml:"NextKeyMarker"`
+	NextUploadIdMarker string        `xml:"NextUploadIdMarker"`
+	Delimiter          string        `xml:"Delimiter"`
+	Prefix             string        `xml:"Prefix"`
+	MaxUploads         string        `xml:"MaxUploads"`
+	IsTruncated        string        `xml:"IsTruncated"`
+	Uploads            []MultiUpload `xml:"Upload"`
+}
+
 //ListObject get the list of key for the specified bucket
 func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string, max_size int, prefix string) (*ObjectList, error) {
 	uri := fmt.Sprintf("/%s/", bucket)
@@ -587,5 +607,69 @@ func (c *AliOSSClient) CompleteUploadPart(bucket string, key string, upload_id s
 	} else {
 		xml.Unmarshal(xml_result, e)
 		return e
+	}
+}
+
+func (c *AliOSSClient) DeleteUploadPart(bucket string, key string, upload_id string) error {
+	uri := fmt.Sprintf("/%s/%s", bucket, key)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["uploadId"] = upload_id
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "DELETE",
+		Url:                  fmt.Sprintf("http://%s.%s/%s", bucket, c.EndPoint, key),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
+func (c *AliOSSClient) ListMultiUploadPart(bucket string) (*MultiUploadList, error) {
+	uri := fmt.Sprintf("/%s/?uploads", bucket)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["uploads"] = ""
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s", bucket, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &MultiUploadList{}
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode/100 == 2 {
+		xml.Unmarshal(xml_result, v)
+		return v, nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return nil, e
 	}
 }
