@@ -1,6 +1,6 @@
 # aliyunoss
 --
-    import "aliyunoss"
+    import "github.com/sundq/aliyunoss"
 
 
 ## Usage
