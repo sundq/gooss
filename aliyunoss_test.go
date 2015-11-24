@@ -356,13 +356,48 @@ func getAk() (string, string) {
 // 	}
 // }
 
-func TestListMultiUploadPart(t *testing.T) {
+// func TestListMultiUploadPart(t *testing.T) {
+// 	accesskey, access_key_secret := getAk()
+// 	c := New(accesskey, access_key_secret, nil, false)
+// 	r, err := c.ListMultiUploadPart(test_bucket)
+// 	if err != nil {
+// 		t.Error(err)
+// 	} else {
+// 		t.Log(r)
+// 	}
+// }
+
+func TestCreateCoreRule(t *testing.T) {
 	accesskey, access_key_secret := getAk()
 	c := New(accesskey, access_key_secret, nil, false)
-	r, err := c.ListMultiUploadPart(test_bucket)
+	v := []CORSRule{{AllowedOrigin: []string{"a", "b"}, AllowedMethod: []string{"GET", "PUT"}, AllowedHeader: []string{"a", "b"}, ExposeHeader: []string{"c", "d"}, MaxAgeSeconds: 100},
+		{AllowedOrigin: []string{"a1", "b1"}, AllowedMethod: []string{"GET", "PUT"}, AllowedHeader: []string{"a1", "b1"}, ExposeHeader: []string{"c1", "d1"}, MaxAgeSeconds: 200}}
+	err := c.CreateCoreRule(test_bucket, v)
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(err)
+	}
+}
+
+func TestGetCoreRule(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, false)
+	r, err := c.GetCoreRule(test_bucket)
 	if err != nil {
 		t.Error(err)
 	} else {
 		t.Log(r)
+	}
+}
+
+func TestDeleteCoreRule(t *testing.T) {
+	accesskey, access_key_secret := getAk()
+	c := New(accesskey, access_key_secret, nil, true)
+	err := c.DeleteCoreRule(test_bucket)
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Log(err)
 	}
 }

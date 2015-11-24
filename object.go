@@ -74,6 +74,19 @@ type MultiUploadList struct {
 	Uploads            []MultiUpload `xml:"Upload"`
 }
 
+type CORSRule struct {
+	AllowedOrigin []string `xml:"AllowedOrigin"`
+	AllowedMethod []string `xml:"AllowedMethod"`
+	AllowedHeader []string `xml:"AllowedHeader"`
+	ExposeHeader  []string `xml:"ExposeHeader"`
+	MaxAgeSeconds int      `xml:"MaxAgeSeconds"`
+}
+
+type CORSConfiguration struct {
+	XMLName xml.Name   `xml:"CORSConfiguration"`
+	CORS    []CORSRule `xml:"CORSRule"`
+}
+
 //ListObject get the list of key for the specified bucket
 func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string, max_size int, prefix string) (*ObjectList, error) {
 	uri := fmt.Sprintf("/%s/", bucket)
@@ -687,5 +700,105 @@ func (c *AliOSSClient) ListMultiUploadPart(bucket string) (*MultiUploadList, err
 	} else {
 		xml.Unmarshal(xml_result, e)
 		return nil, e
+	}
+}
+
+//create cores rule
+func (c *AliOSSClient) CreateCoreRule(bucket string, rules []CORSRule) error {
+	uri := fmt.Sprintf("/%s/?cors", bucket)
+	rule_config := &CORSConfiguration{CORS: rules}
+	xml_content, _ := xml.MarshalIndent(rule_config, "", "  ")
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["cors"] = ""
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "PUT",
+		Url:                  fmt.Sprintf("http://%s.%s", bucket, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              bytes.NewReader([]byte(xml.Header + string(xml_content))),
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
+	}
+}
+
+//get cores rule
+func (c *AliOSSClient) GetCoreRule(bucket string) (*CORSConfiguration, error) {
+	uri := fmt.Sprintf("/%s/?cors", bucket)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["cors"] = ""
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "GET",
+		Url:                  fmt.Sprintf("http://%s.%s", bucket, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	v := &CORSConfiguration{}
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode/100 == 2 {
+		xml.Unmarshal(xml_result, v)
+		return v, nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return nil, e
+	}
+}
+
+//delete cores rule
+func (c *AliOSSClient) DeleteCoreRule(bucket string) error {
+	uri := fmt.Sprintf("/%s/?cors", bucket)
+	query := make(map[string]string)
+	header := make(map[string]string)
+	query["cors"] = ""
+	s := &oss_agent{
+		AccessKey:            c.AccessKey,
+		AccessKeySecret:      c.AccessKeySecret,
+		Verb:                 "DELETE",
+		Url:                  fmt.Sprintf("http://%s.%s", bucket, c.EndPoint),
+		CanonicalizedHeaders: header,
+		CanonicalizedUri:     uri,
+		CanonicalizedQuery:   query,
+		Content:              &bytes.Reader{},
+		Debug:                c.Debug,
+		logger:               c.logger,
+	}
+
+	e := &AliOssError{}
+	resp, xml_result, err := s.send_request(false)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode/100 == 2 {
+		return nil
+	} else {
+		xml.Unmarshal(xml_result, e)
+		return e
 	}
 }
