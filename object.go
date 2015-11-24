@@ -245,7 +245,7 @@ func (c *AliOSSClient) AppendObjectForBuff(bucket string, key string, position i
 	}
 }
 
-//DeleteObject delete a key
+//DeleteObject delete single key
 func (c *AliOSSClient) DeleteObject(bucket string, key string) error {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -277,7 +277,7 @@ func (c *AliOSSClient) DeleteObject(bucket string, key string) error {
 	}
 }
 
-//DeleteMultiObject delete a multi-object
+//DeleteMultiObject delete multi-object
 func (c *AliOSSClient) DeleteMultiObject(bucket string, keys []string) error {
 	uri := fmt.Sprintf("/%s/?delete", bucket)
 	query := make(map[string]string)
@@ -317,7 +317,7 @@ func (c *AliOSSClient) DeleteMultiObject(bucket string, keys []string) error {
 	}
 }
 
-//GetObjectAsBuffer a object as buffer
+//GetObjectAsBuffer get object as buffer
 func (c *AliOSSClient) GetObjectAsBuffer(bucket string, key string) ([]byte, error) {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -349,7 +349,7 @@ func (c *AliOSSClient) GetObjectAsBuffer(bucket string, key string) ([]byte, err
 	}
 }
 
-//GetObjectAsFile a object as local file
+//GetObjectAsFile get a object as local file
 func (c *AliOSSClient) GetObjectAsFile(bucket string, key string, filepath string) error {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -456,6 +456,7 @@ func (c *AliOSSClient) GetObjectMetaData(bucket string, key string) (http.Header
 	}
 }
 
+//set object access control
 func (c *AliOSSClient) CreateObjectAcl(bucket string, key string, permission string) error {
 	uri := fmt.Sprintf("/%s/%s?acl", bucket, key)
 	query := make(map[string]string)
@@ -488,6 +489,7 @@ func (c *AliOSSClient) CreateObjectAcl(bucket string, key string, permission str
 	}
 }
 
+//get object access control
 func (c *AliOSSClient) GetObjectAcl(bucket string, key string) (*BucketACL, error) {
 	uri := fmt.Sprintf("/%s/%s?acl", bucket, key)
 	query := make(map[string]string)
@@ -521,6 +523,7 @@ func (c *AliOSSClient) GetObjectAcl(bucket string, key string) (*BucketACL, erro
 	}
 }
 
+//Init multipart upload
 func (c *AliOSSClient) GetInitMultipartUpload(bucket string, key string) (*MultiUploadInit, error) {
 	uri := fmt.Sprintf("/%s/%s?uploads", bucket, key)
 	query := make(map[string]string)
@@ -554,6 +557,7 @@ func (c *AliOSSClient) GetInitMultipartUpload(bucket string, key string) (*Multi
 	}
 }
 
+//upload a part for multiupload
 func (c *AliOSSClient) UploadPart(bucket string, key string, part_number int, upload_id string, data []byte) error {
 	uri := fmt.Sprintf("/%s", key)
 	query := make(map[string]string)
@@ -586,6 +590,7 @@ func (c *AliOSSClient) UploadPart(bucket string, key string, part_number int, up
 	}
 }
 
+//tell oss a multipart upload have been completed
 func (c *AliOSSClient) CompleteUploadPart(bucket string, key string, upload_id string, part []PartUpload) error {
 	data := CompleteUpload{Part: part}
 	xml_content, _ := xml.MarshalIndent(data, "", "  ")
@@ -619,6 +624,7 @@ func (c *AliOSSClient) CompleteUploadPart(bucket string, key string, upload_id s
 	}
 }
 
+//delete a multipart upload
 func (c *AliOSSClient) DeleteUploadPart(bucket string, key string, upload_id string) error {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -650,6 +656,7 @@ func (c *AliOSSClient) DeleteUploadPart(bucket string, key string, upload_id str
 	}
 }
 
+//list multiupload
 func (c *AliOSSClient) ListMultiUploadPart(bucket string) (*MultiUploadList, error) {
 	uri := fmt.Sprintf("/%s/?uploads", bucket)
 	query := make(map[string]string)

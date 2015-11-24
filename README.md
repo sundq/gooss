@@ -1,6 +1,6 @@
 # aliyunoss
 --
-    import "github.com/sundq/gooss"
+    import "aliyunoss"
 
 
 ## Usage
@@ -214,6 +214,17 @@ type LoggingEnabled struct {
 ```
 
 
+#### type MultiUpload
+
+```go
+type MultiUpload struct {
+	Key       string `xml:"Key"`
+	UploadId  string `xml:"UploadId"`
+	Initiated string `xml:"Initiated"`
+}
+```
+
+
 #### type MultiUploadInit
 
 ```go
@@ -222,6 +233,25 @@ type MultiUploadInit struct {
 	Bucket   string   `xml:"Bucket"`
 	Key      string   `xml:"Key"`
 	UploadId string   `xml:"UploadId"`
+}
+```
+
+
+#### type MultiUploadList
+
+```go
+type MultiUploadList struct {
+	XMLName            xml.Name      `xml:"ListMultipartUploadsResult"`
+	Bucket             string        `xml:"Bucket"`
+	KeyMarker          string        `xml:"KeyMarker"`
+	UploadIdMarker     string        `xml:"UploadIdMarker"`
+	NextKeyMarker      string        `xml:"NextKeyMarker"`
+	NextUploadIdMarker string        `xml:"NextUploadIdMarker"`
+	Delimiter          string        `xml:"Delimiter"`
+	Prefix             string        `xml:"Prefix"`
+	MaxUploads         string        `xml:"MaxUploads"`
+	IsTruncated        string        `xml:"IsTruncated"`
+	Uploads            []MultiUpload `xml:"Upload"`
 }
 ```
 
@@ -280,6 +310,7 @@ func (c *AliOSSClient) AddBucketRefer(name string, allow_empty_referer bool, ref
 ```go
 func (c *AliOSSClient) AppendObjectForBuff(bucket string, key string, position int, data []byte) (int, string, error)
 ```
+AppendObjectForBuff like CreateObjectForBuff but it will append the exist key
 
 #### func (*AliOSSClient) CloseBucketLogging
 
@@ -292,6 +323,7 @@ func (c *AliOSSClient) CloseBucketLogging(name string) error
 ```go
 func (c *AliOSSClient) CompleteUploadPart(bucket string, key string, upload_id string, part []PartUpload) error
 ```
+tell oss a multipart upload have been completed
 
 #### func (*AliOSSClient) CreateBucket
 
@@ -316,18 +348,23 @@ func (c *AliOSSClient) CreateBucketWebsite(name string, index string, error_file
 ```go
 func (c *AliOSSClient) CreateObjectAcl(bucket string, key string, permission string) error
 ```
+set object access control
 
 #### func (*AliOSSClient) CreateObjectForBuff
 
 ```go
 func (c *AliOSSClient) CreateObjectForBuff(bucket string, key string, data []byte, permission string) error
 ```
+CreateObjectForBuff create a oss key for buffer, the permission can be private,
+public-read or public_write
 
 #### func (*AliOSSClient) CreateObjectForFile
 
 ```go
 func (c *AliOSSClient) CreateObjectForFile(bucket string, key string, filepath string, permission string) error
 ```
+CreateObjectForBuff create a oss key for local file, the permission can be
+private, public-read or public_write
 
 #### func (*AliOSSClient) DeleteBucket
 
@@ -353,12 +390,21 @@ func (c *AliOSSClient) DeleteBucketWebsite(name string) error
 ```go
 func (c *AliOSSClient) DeleteMultiObject(bucket string, keys []string) error
 ```
+DeleteMultiObject delete multi-object
 
 #### func (*AliOSSClient) DeleteObject
 
 ```go
 func (c *AliOSSClient) DeleteObject(bucket string, key string) error
 ```
+DeleteObject delete single key
+
+#### func (*AliOSSClient) DeleteUploadPart
+
+```go
+func (c *AliOSSClient) DeleteUploadPart(bucket string, key string, upload_id string) error
+```
+delete a multipart upload
 
 #### func (*AliOSSClient) GetBucketAcl
 
@@ -389,6 +435,7 @@ func (c *AliOSSClient) GetBucketWebsite(name string) (*BucketWebsite, error)
 ```go
 func (c *AliOSSClient) GetInitMultipartUpload(bucket string, key string) (*MultiUploadInit, error)
 ```
+Init multipart upload
 
 #### func (*AliOSSClient) GetLocationOfBucket
 
@@ -401,36 +448,48 @@ func (c *AliOSSClient) GetLocationOfBucket(bucket string) (string, error)
 ```go
 func (c *AliOSSClient) GetObjectAcl(bucket string, key string) (*BucketACL, error)
 ```
+get object access control
 
 #### func (*AliOSSClient) GetObjectAsBuffer
 
 ```go
 func (c *AliOSSClient) GetObjectAsBuffer(bucket string, key string) ([]byte, error)
 ```
+GetObjectAsBuffer get object as buffer
 
 #### func (*AliOSSClient) GetObjectAsFile
 
 ```go
 func (c *AliOSSClient) GetObjectAsFile(bucket string, key string, filepath string) error
 ```
+GetObjectAsFile get a object as local file
 
 #### func (*AliOSSClient) GetObjectInfo
 
 ```go
 func (c *AliOSSClient) GetObjectInfo(bucket string, key string) (http.Header, error)
 ```
+GetObjectInfo information of object
 
 #### func (*AliOSSClient) GetObjectMetaData
 
 ```go
 func (c *AliOSSClient) GetObjectMetaData(bucket string, key string) (http.Header, error)
 ```
+GetObjectMetaData information of object
 
 #### func (*AliOSSClient) ListBucket
 
 ```go
 func (c *AliOSSClient) ListBucket(prefix string, marker string, max_size int) (*BucketList, error)
 ```
+
+#### func (*AliOSSClient) ListMultiUploadPart
+
+```go
+func (c *AliOSSClient) ListMultiUploadPart(bucket string) (*MultiUploadList, error)
+```
+list multiupload
 
 #### func (*AliOSSClient) ListObject
 
@@ -456,5 +515,6 @@ func (c *AliOSSClient) OpenBucketLogging(name string, target_bucket string, obj_
 ```go
 func (c *AliOSSClient) UploadPart(bucket string, key string, part_number int, upload_id string, data []byte) error
 ```
+upload a part for multiupload
 
 
