@@ -20,7 +20,6 @@ type Object struct {
 }
 
 type ObjectList struct {
-	// XMLName xml.Name `xml:"ListAllMyBucketsResult"`
 	BucketName string   `xml:"Name"`
 	Prefix     string   `xml:"Prefix"`
 	Marker     string   `xml:"Marker"`
@@ -55,6 +54,7 @@ type CompleteUpload struct {
 	Part    []PartUpload `xml:"Part"`
 }
 
+//ListObject get the list of key for the specified bucket
 func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string, max_size int, prefix string) (*ObjectList, error) {
 	uri := fmt.Sprintf("/%s/", bucket)
 	query := make(map[string]string)
