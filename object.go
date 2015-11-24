@@ -124,6 +124,7 @@ func (c *AliOSSClient) ListObject(bucket string, delimiter string, marker string
 	}
 }
 
+//CreateObjectForBuff create a oss key for buffer, the permission can be private, public-read or public_write
 func (c *AliOSSClient) CreateObjectForBuff(bucket string, key string, data []byte, permission string) error {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -162,6 +163,7 @@ func (c *AliOSSClient) CreateObjectForBuff(bucket string, key string, data []byt
 	}
 }
 
+//CreateObjectForBuff create a oss key for local file, the permission can be private, public-read or public_write
 func (c *AliOSSClient) CreateObjectForFile(bucket string, key string, filepath string, permission string) error {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -206,6 +208,7 @@ func (c *AliOSSClient) CreateObjectForFile(bucket string, key string, filepath s
 	}
 }
 
+//AppendObjectForBuff like CreateObjectForBuff but it will append the exist key
 func (c *AliOSSClient) AppendObjectForBuff(bucket string, key string, position int, data []byte) (int, string, error) {
 	uri := fmt.Sprintf("/%s/%s?append&position=%d", bucket, key, position)
 	query := make(map[string]string)
@@ -242,6 +245,7 @@ func (c *AliOSSClient) AppendObjectForBuff(bucket string, key string, position i
 	}
 }
 
+//DeleteObject delete a key
 func (c *AliOSSClient) DeleteObject(bucket string, key string) error {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -273,6 +277,7 @@ func (c *AliOSSClient) DeleteObject(bucket string, key string) error {
 	}
 }
 
+//DeleteMultiObject delete a multi-object
 func (c *AliOSSClient) DeleteMultiObject(bucket string, keys []string) error {
 	uri := fmt.Sprintf("/%s/?delete", bucket)
 	query := make(map[string]string)
@@ -312,6 +317,7 @@ func (c *AliOSSClient) DeleteMultiObject(bucket string, keys []string) error {
 	}
 }
 
+//GetObjectAsBuffer a object as buffer
 func (c *AliOSSClient) GetObjectAsBuffer(bucket string, key string) ([]byte, error) {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -343,6 +349,7 @@ func (c *AliOSSClient) GetObjectAsBuffer(bucket string, key string) ([]byte, err
 	}
 }
 
+//GetObjectAsFile a object as local file
 func (c *AliOSSClient) GetObjectAsFile(bucket string, key string, filepath string) error {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -384,6 +391,7 @@ func (c *AliOSSClient) GetObjectAsFile(bucket string, key string, filepath strin
 	}
 }
 
+//GetObjectInfo information of object
 func (c *AliOSSClient) GetObjectInfo(bucket string, key string) (http.Header, error) {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
@@ -416,6 +424,7 @@ func (c *AliOSSClient) GetObjectInfo(bucket string, key string) (http.Header, er
 	}
 }
 
+//GetObjectMetaData information of object
 func (c *AliOSSClient) GetObjectMetaData(bucket string, key string) (http.Header, error) {
 	uri := fmt.Sprintf("/%s/%s", bucket, key)
 	query := make(map[string]string)
